@@ -115,8 +115,8 @@ For both of them you need to arguments:
 Example:
 ```ruby
 greeting = "Hello Hello Everyone!"
-greeting.sub("Hello", "Bye) # => "Bye Hello Everyone"
-greeting.gsub("Hello", "Bye) # => "Bye Bye Everyone"
+greeting.sub("Hello", "Bye") # => "Bye Hello Everyone"
+greeting.gsub("Hello", "Bye") # => "Bye Bye Everyone"
 ```
 
 ### Combining Strings and Variables
@@ -148,3 +148,124 @@ puts "I am #{modifier * 3 + mood} for today's class!"
 `modifier * 3 + mood` is evaluated first and then injected into the outer string.
 
 It is highly recommended to use String Interpolation instead of String Concatenation.
+
+## 4. Symbols (New to you!)
+Kinda like halfway between a string and a number. Recognisable because it starts with a colon then one or more letters: `:flag`, or `:best_friend`.
+
+### Symbols for new programmers
+Symbol is like a strpped down string with barely no methods and no string interpolations:
+```ruby
+"hello".methods
+"hello".methods.count # 183
+:hello.methods
+:hello.methods.count # 84
+```
+
+### Symbols for the experienced
+Symbol is like "named integer". It doesn't matter what actualy value the symbol references. Any reference to that value will give back the same value. Symbols are therefore defined in a global symbol table and their value cannot change. (I'm guessing this is like a const???)
+
+## 5. Numbers
+There are integers and floats. Integers are easy to work with because you can use normal math operations. To look at the methods, you can run `5.methods`.
+
+### Repeating instructions
+A for-loop construct in Javascript may look something like:
+```javascript
+for (let i = 0; i < 5; i++) {
+  console.log("Hello World!");
+}
+```
+In Ruby:
+```ruby
+5.times do
+  puts "Hello World!"
+end
+```
+We can do this because Ruby's integers are objects and they have methods. 
+
+## 6. Blocks
+A block starts with the `do` and ends with the `end` keyword, like the "loop" example above
+
+#### Bracket blocks
+We can use alternate markers to begin and end the block if we have single instruction, like the following:
+```ruby
+5.times{ puts "Hello World!" }
+```
+
+### Blocks Are Passed To Methods
+Blocks are parameter passed into a method call. 
+
+For eg: in `5.times`, we don't really know what we want to do 5 times. When you give it a block, the block is like an argument saying that this is the thing we want to do 5 times.
+
+The `.gsub` method will run a block once for each match:
+```ruby
+"this is a sentence".gsub("e"){ puts "Found an E!" }
+# Found an E!
+# Found an E!
+# Found an E!
+# => "this is a sntnc"
+```
+`Found an E!` appears three times because we are running `puts` every time we find an "e".
+
+### Block Parameters
+Our block may need to reference the value they're working with. We can specify block parameter inside pipe characters:
+
+```ruby
+3.times do |i|
+  puts "#{i}: Hello, World!"
+end
+# 0: Hello, World!
+# 1: Hello, World!
+# 2: Hello, World!
+# => 3
+```
+Another example:
+```ruby
+"this is a sentence".gsub("e"){|letter| letter.upcase}
+# => "this is a sEntEncE"
+```
+`gsub` is now using the result of the block as the replacement!
+
+## 7. Arrays
+We need to deal with a *collection* of data, and Array provides us the ability to do so.
+
+Arrays in code:
+```ruby
+meals = ["Breakfast", "Lunch", "Dinner"]
+# => ["Breakfast", "Lunch", "Dinner"]
+meals << "Dessert" # "shovel operator" to add to the end of an array
+# => ["Breakfast", "Lunch", "Dinner", "Dessert"]
+meals[2]
+# => "Dinner"
+meals.last
+# => "Dessert"
+```
+### Common Array Methods
+- `sort`
+- `each`: iterate through each elemnt
+- `join`: mashing together into one
+- `index`: finding address of a specific element
+- `include?`: ask if element is present
+
+## 8. Hashes
+Each element is addressed by a name. It's kinda like an array but instead of number indices we use string.
+
+### Key/Value pairs
+A hash is *unordered*, organised into "key/value pairs"
+```ruby
+produce = {"apples" => 3, "oranges" => 1, "carrots" => 12}
+puts "There are #{produce['oranges']} oranges in the fridge."
+```
+
+Creating a hash: key and value linked by the rocket `=>` symbol. You can see that it starts with `{` and ends with `}`.
+
+Keys in hash *must be unique*. If you do `produce["oranges"] = 6`, the value `1` will be replaced by `6`. If you do `produce["grapes"] = 221`, a new key/value pair will be inserted.
+
+`.keys` and `.values` methods are also available to just look at these halves.
+
+### Simplified Hash Syntax
+Commonly, we use symbols as keys of hash. A new variation is therefore:
+```ruby
+produce = {apples: 3, oranges: 1, carrots: 12}
+puts "There are #{produce[:oranges]} oranges in the fridge."
+```
+Keys *end* with a colon rather than beginning with one. This simplified syntax works with Ruby v1.9 and higher.
