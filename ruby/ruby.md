@@ -269,3 +269,107 @@ produce = {apples: 3, oranges: 1, carrots: 12}
 puts "There are #{produce[:oranges]} oranges in the fridge."
 ```
 Keys *end* with a colon rather than beginning with one. This simplified syntax works with Ruby v1.9 and higher.
+
+## 9. Conditionals
+Conditional statements evaluate to `true` or `false`. Operators: `==`, `>`, `>=`, `<`, `<=`.
+
+`.nil?`: Every object has this. `true` only when the object is `nil`.
+`.include?`: `true` if the array includes the specified element
+
+**Ruby Convention**: A method returning boolean should have name ending in a `?`.
+
+### Conditional Branching / Instructions
+The branching uses: `if`/`elsif`/`else`. **Take note**: `elsif` is used!
+For example:
+```ruby
+def water_status(minutes)
+  if minutes < 7
+    puts "Water not boiling yet"
+  elsif minutes == 7
+    puts "It's just barely boiling"
+  elsif minutes == 8
+    puts "It's boiling"
+  else
+    puts "Hot!!"
+  end
+end
+```
+
+#### `if` Possible Constructions
+- One `if` statment
+- Zero or more `elsif`
+- Zero or one `else`
+
+Only *one* section of the `if`/`elsif`/`else` structure can have instructions run. If you see one block executing, then that's it!
+
+### Equality vs Assignment 
+`=` is assignment, `==` is equality.
+
+You can also combine conditional statements using logical operator. 'and': `&&`, 'or': `||`.
+
+## 10. Nil & Nothingness
+`nil` is Ruby's way of referring to "nothingness".
+
+If you have three eggs and eat all three, you may think you have "nothing", but you actually have "0". Zero *is something*, which is a number.
+
+If you have a string and deleted all characters, you may also think you have ended up with nothing, but you actually have `""` which is an empty string; still something!
+
+`nil` usually encountered when asking for something that doesn't exist. E.g. an array of 5 elements, and you are asking for the sixth element. Such an element doesn't exist so you Ruby will give us `nil`.
+
+## 11. Objects, Attributes, and Methods
+
+### Ruby is Object-Oriented
+All things we interact with inside the Virtual Machine are objects. Every data is object.
+Objects:
+1. hold information, called *attributes*
+2. can perform actions, called *methods*
+
+### Classes and Instances
+In OOP, we define *classes*, to be an abstract descriptions of a category or type of thing. It tells us what attributes and methods all objects of that type have.
+
+#### Defining a Class
+Let's say we have a class named `Student`:
+```ruby
+class Student
+  attr_accessor :first_name, :last_name, :primary_phone_number
+
+  def introduction
+    puts "Hi, I'm #{first_name}!"
+  end
+end
+```
+In the above, the student has attributes like `first_name`, `last_name`, and `primary_phone_number`. It has method `introduction`
+
+#### Creating Instances
+The class doesn't represent a student, but it's the *idea* of what student is like. To actually represent one, we need an instance. 
+
+When you are an actual student, you're no longer abstract. You actually have information about yourself, concrete ones. Unlike the *class* `Student` which has abstract properties that can't be determined ahead of time.
+
+To create an instance, use the `new` method. E.g.:
+```ruby
+frank = Student.new
+```
+
+### Return Value
+In Ruby, every time you call a method you get a value back. By default, a **Ruby method returns the value of the last expression it evaluated**.
+
+E.g.
+```ruby
+class Student
+  attr_accessor :first_name, :last_name, :primary_phone_number
+
+  def introduction
+    puts "Hi, I'm #{first_name}!"
+  end
+
+  def favorite_number
+    7
+  end
+end
+
+frank = Student.new # Instantiating a new object
+frank.first_name = "Frank"
+puts "Frank's favorite number is #{frank.favorite_number}."
+```
+
+The `favorite_number` method returns the last line of the method which is just `7`. 
