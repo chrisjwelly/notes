@@ -373,3 +373,30 @@ puts "Frank's favorite number is #{frank.favorite_number}."
 ```
 
 The `favorite_number` method returns the last line of the method which is just `7`. 
+---
+End of Ruby in 100 Minutes. Enter Learn To 'Program'!
+
+## The Methods `gets` and `chomp`
+Trivia: the `s` in `puts` stands for 'string'! Anything that you put becomes a string, even if it is a number.
+There is also the `gets` method (get string)! Which does the opposite of `puts`.
+```ruby
+puts "Hello there, and what's your name?"
+name = gets
+puts "Your name is #{name}? What a lovely name!"
+puts "Pleased to meet you, #{name}. :)"
+```
+
+If you ran this, you may get a funky output like:
+```ruby
+Hello there, and what's your name?
+# Chris
+Your name is Chris
+? What a lovely name!
+Pleased to meet you, Chris
+. :)
+```
+
+Turns out, the input registers the `Enter` key as well! This is where `chomp` can help us. Replace the above `name = gets` to `name = gets.chomp` and it should be all good!
+
+## Some more String Methods
+`reverse`: reverses the string. 
