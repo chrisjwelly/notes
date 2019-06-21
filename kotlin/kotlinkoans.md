@@ -83,7 +83,7 @@ Lambda expression requires code blocks:
 ```kotlin
 fun containsEven(collection: Collection<Int>: Boolean = collection.any { x -> x % 2 == 0 }
 // is equivalent to
-fun containsEven(collection: Collection<Int>: Boolean = collection.any { it % 2 == 0}
+fun containsEven(collection: Collection<Int>: Boolean = collection.any { it % 2 == 0 }
 ```
 
 ### Strings
@@ -185,7 +185,7 @@ val l: Int = if (b != null) b.length else -1
 
 // elvis
 val l = b?.length ?: -1
-``
+```
 
 You can use `throw` and `return` together with elvis operator
 
@@ -241,3 +241,139 @@ interface Mailer {
     fun sendMessage(email: String, message: String)
 }
 ```
+
+### Smart Casts
+[Reference](https://kotlinlang.org/docs/reference/typecasts.html#smart-casts)
+Don't neeed the explicit cast operators:
+```kotlin
+// example 1
+fun demo(x: Any) {
+    if (x is String) {
+        print(x.length) // x is automatically cast to String
+    }
+}
+
+// example 2
+if (x !is String) return
+
+print(x.length) // x is automatically cast to String
+
+// example 3, right side of || and &&
+if (x !is String || x.length == 0) return
+
+if (x is String && x.length > 0) {
+    print(x.length) // x is automatically cast to String
+}
+
+// example 4 for when-expressions and while-loops
+when (x) {
+    is Int -> print(x + 1)
+    is String -> print(x.length + 1) 
+    is IntArray -> print(x.sum())
+}
+```
+
+#### When Expression
+[Reference](https://kotlinlang.org/docs/reference/control-flow.html#when-expression)
+`when` replaces the switch operator
+Simple example:
+```kotlin
+when (x) {
+    1 -> print("x == 1")
+    2 -> print("x == 2")
+    else -> { // note the block
+        print("x is neither 1 nor 2")
+    }
+}
+```
+Each branch can be a block, and its value is the last value of the last expression in the block
+
+If many cases should be handled in the same way. the conditions can be combined
+
+```kotlin
+when (x) {
+    0, 1 -> print("x == 0 or x == 1")
+    else -> print("otherwise")
+}
+```
+
+We can also check a value for being `in` or `!in` a range or collection:
+```kotlin
+when (x) {
+    in 1..10 -> print("x is in the range")
+    in validNumbers -> print("x is valid")
+    !in 10..20 -> print("x is outside the range")
+    else -> print("none of the above")
+}
+```
+
+It is possible to capture `when` subject in a variable using following syntax
+
+```kotlin
+fun Request.getBody() = 
+        when (val response = executeRequest()) {
+            is Success -> response.body
+            is HttpError -> throw HttpException(response.status)
+        }
+```
+Scope of variable, introduced in `when` subject, is restricted to `when` body. (I don't quite understand this yet but it's all right)
+
+### Extension functions
+[Reference](https://kotlinlang.org/docs/reference/extensions.html)
+
+Provides the ability to extend a class with a new functionality without having to inherit class. 
+We need to prefix its name with a receiver type, which is the type being extended. The following example adds a `swap` function to `MutableList<Int>`
+```kotlin
+fun MutableList<Int>.swap(index1: Int, index2: Int) {
+    val tmp = this[index1] // 'this' corresponds to the list
+    this[index1] = this[index2]
+    this[index2] = tmp
+}
+```
+
+### Object Expressions
+[Reference](https://kotlinlang.org/docs/reference/object-declarations.html)
+Object expressions play the same role as anonymous inner classes in Java
+To create an object of an anonymous class that inherits from some type, we write:
+```kotlin
+window.addMouseListener(object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) { ... }
+    
+    override fun mouseEntered(e: MouseEvent) { ... }
+})
+```
+
+If a supertype has a constructor, parameters must be passed to it
+```kotlin
+open class A(x: Int) {
+    public open val y: Int = x
+}
+
+interface B { ... }
+
+val ab: A = object : A(1), B {
+    override val y = 15
+}
+// I don't understand this example
+```
+
+If we need "just an object", with no nontrivial supertypes:
+```kotlin
+fun foo() {
+    val adHoc = object {
+        var x: Int = 0
+        var y: Int = 0
+    }
+    print(adHoc.x + adHoc.y)
+}
+```
+
+### SAM Conversions
+[Reference](https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions)
+You can pass a Lambda instead if the target is an interface with Single Abstract Method!
+
+### Extensions on collections
+[Reference](https://blog.jetbrains.com/kotlin/2012/09/kotlin-m3-is-out/#Collections)
+[Kotlin Standard Library](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/)
+
+## Conventions
