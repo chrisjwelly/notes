@@ -116,7 +116,7 @@ Intent is an operation to be performed. Explicit intent means that you know the 
 
 We can pass things to the intent! e.g. `intent.putExtra("key", msg)` where `msg` contains a string. The key has to be unique!
 
-To extract, go to the target activity. Use the `getExtra`, but not getters in Kotlin. Therefore we can have: `val bundle: Bundle? = intent.extras`. Specifically now we use the key to get the string! As such: `val msg = bundle!!.getString("key")`
+To extract, go to the target activity. Use the `getExtra`, but no getters in Kotlin. Therefore we can have: `val bundle: Bundle? = intent.extras`. Specifically now we use the key to get the string! As such: `val msg = bundle!!.getString("key")`
 
 LinearLayout vertical orientation allows you to kind of automatically arrange and stack. Some attributes you learnt: textSize, textStyle, textColor, textAlignment, layout_margin(from all direction). 
 
@@ -133,10 +133,139 @@ btnShareToOtherApps.setOnClickListener {
 
     val intent = Intent() // because this is implicit
     intent.action = Intent.ACTION_SEND
-    intent.putExtra(Intent.EXTRA_TEXT, message) // EXTRA_TEXT is a recognized key between apps
+    intent.putExtra(Intent.EXTRA_TEXT, message) 
+    // EXTRA_TEXT is a well-recognized key between apps
     intent.type = "text/plain"
 
     startActivity(Intent.createChooser(intent, "Share to: "))
+}
+```
+This will allow you to forward the message to other applications once you click the button!
+
+---
+# Section 3: Implementing Lists and Kotlin Classes
+## Introduction to RecyclerView and CardView
+RecyclerView is an Advanced and Efficient ListView. Three types of orientation:
+* Linear Layout
+* Grid Layout
+* Staggered Grid Layout
+
+A list-like structure, grid-like structure, arranged like a puzzle
+
+Card-like structure: have an image and a text
+
+## Adding RecyclerView and CardView
+Some steps to implement RecyclerView:
+1. XML Layouts
+   * Add RecyclerView
+   * Design the layout for each item in the list
+2. Prepare the data model
+3. Create Custom Adapter class
+4. Link Custom Adapter with RecyclerView
+
+You may need to some downloading here and that's fine. Just ensure you are connected to the internet
+
+## Define Model Class
+We do so using a data class. Just create a `Model.kt` file and add a data class of Hobby. It requires a `title` which is a String.
+
+Then we have an object declaration of `Supplier`, and define a listOf hobbies in the Supplier
+
+## Creating Adapter Class
+Adapter is something that holds the data
+
+Link HobbiesAdapter with RecyclerView, it helps to bind data to the UI (attach models to RecyclerView)
+
+Within the main package, create a `HobbiesAdapter`. Later on, don't forget to implement all the members function!
+
+Honestly, I don't understand a thing but here is the code
+```kotlin
+class HobbiesAdapter(val context: Context, val hobbies: List<Hobby>) : RecyclerView.Adapter<HobbiesAdapter.MyViewHolder>(){
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
+        // It is responsible for creating the ViewHolder, which is the each item in the list
+        val view = LayoutInflater.from(context).inflate(R.layout.list_item, parent, false)
+        return MyViewHolder(view)
+    }
+
+    override fun getItemCount(): Int {
+        return hobbies.size
+    }
+
+    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+        // responsible for binding all data to all the
+        // views that are created
+        val hobby = hobbies[position]
+        // in the future we need the position so we put it there
+        holder.setData(hobby, position)
+    }
+
+    inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun setData(hobby: Hobby, pos: Int) {
+            itemView.txvTitle.text = hobby!!.title
+        }
+    }
+}
+```
+
+## Link RecyclerView and Custom Adapter
+The basic linking can be done by modifying the `onCreate` method in the `HobbiesActivity`
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_hobbies)
+    // so far it is basic
+
+    // here it can be modified to be StaggeredGridLayout 
+    val layoutManager = LinearLayoutManager(this)
+    // Don't forget to setOrientation like this! (kotlin style)
+    layoutManager.orientation = LinearLayoutManager.VERTICAL
+    // the recyclerView here is the id of the RecyclerView view
+    recyclerView.layoutManager = layoutManager
+
+    val adapter = HobbiesAdapter(this, Supplier.hobbies)
+    recyclerView.adapter = adapter
+}
+```
+Essentially, you got to set the 1) layout manager and 2) the adapter to the view.
+
+Now the problem that we currently have is that the cards cannot be pressed. Nothing happens when you click on it. To change this, you should go to the innter class and make some inits!
+```kotlin
+inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    // I think this is adding properties to the class
+    var currentHobby: Hobby? = null
+    var currentPosition: Int = 0
+
+    init {
+        // itemView obtained from the parameter
+        itemView.setOnClickListener {
+            // observer that you use currentHobby, and this is a property
+            // of the class
+            Toast.makeText(context,
+                currentHobby!!.title + " Clicked !",
+                Toast.LENGTH_SHORT )
+                .show()
+        }
+
+        // essentially this is the same code as before for sharing!
+        itemView.imgShare.setOnClickListener {
+            val message: String = "My hobby is: " + currentHobby!!.title
+
+            val intent = Intent()
+            intent.action = Intent.ACTION_SEND
+            intent.putExtra(Intent.EXTRA_TEXT, message)
+            intent.type = "text/plain"
+
+            // context is required because startActivity method is in there
+            context.startActivity(Intent.createChooser(intent, "Share to: "))
+        }
+    }
+
+    fun setData(hobby: Hobby, pos: Int) {
+        itemView.txvTitle.text = hobby!!.title
+
+        // this is something new added
+        this.currentHobby = hobby
+        this.currentPosition = pos
+    }
 }
 ```
 
