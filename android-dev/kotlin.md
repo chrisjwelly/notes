@@ -1,6 +1,7 @@
 # Android Development with Kotlin
 [Reference](https://www.youtube.com/watch?v=e7WIPwRd2s8&list=PLlxmoA0rQ-Lw5k_QCqVl3rsoJOnb_00UV&index=1)
 
+# Section 1: Getting Started
 ## Main Activity
 The activity represents one screen in Android
 
@@ -31,10 +32,10 @@ Package name: Should be **unique**, and **not clash** with other apps. *Can chan
 `app` folder: also known as a module. 
 
 #### `res` folder:
-`res/drawable`: Image assets, Vector assets
-`res/mipmap`: App launcher Icons
-`res/values`: App styles and themes, color details, Localised Strings ( texts used in app UI ). 
-`res/layout`: The layouts for your activity
+* `res/drawable`: Image assets, Vector assets
+* `res/mipmap`: App launcher Icons
+* `res/values`: App styles and themes, color details, Localised Strings ( texts used in app UI ). 
+* `res/layout`: The layouts for your activity
 
 #### `AndroidManifest.xml`: 
 * Contains application component details
@@ -48,3 +49,96 @@ Package name: Should be **unique**, and **not clash** with other apps. *Can chan
 * External libraries or dependencies to be included
 
 ___
+# Section 2: Exploring Android App Structure in Depth
+## Explore Activity, User Interface and Views
+Four Building blocks of Android:
+* Activity
+* Broadcast Receiver
+* Service
+* Content Provider
+
+All of these must be declared in `AndroidManifest.xml`
+
+An *Activity* represents a single screen with a user interface. 
+
+### View
+What is View? It is related more to the Layout. Break down Layout into smaller components. Things like Horizontal Scrolling. 
+
+A Layout can have many views such as: TextView, Checkbox, Button, etc
+
+The HelloWorld in the previous section in the `.xml` is actually a TextView!
+
+In the past, instead of `AppCompatActivity`, it was simply `Activity`. 
+
+## Designing layout and handle events
+Use the Design tab to add views to the layout. 
+Layout is divided into the 4 quadrants. Android Studio will help position all these for you
+
+layout attributes may be different and it's okay. 
+What's important is that **id must be unique**
+
+You can go to `MainActivity.kt` and insert this:
+```kotlin
+btnShowToast.setOnClickListener {
+    // Code
+    // Takes in a Lambda
+    Log.i("MainActivity", "Button was clicked!")
+
+    Toast.makeText(this, "Button was clicked!", Toast.LENGTH_SHORT).show()
+}
+```
+
+Use Alt + Enter to rectify any error!
+
+The `Log` allows you to view it in LogCat. The `Toast` creates a toast message. **It is important to have the `show()`** method!!
+
+## Navigating between activities
+Now suppose you have a view with id of `etUserMessage` which is a text input. You can retrieve the text via `etUserMessage.text.toString()`. The 'text' is essentially the getter but in Kotlin such things don't exist (?), and that's ok.
+
+An Intent takes in the current context and the target context. You can then define a button that redirects you to another activity upon clicking it like the following:
+```kotlin
+btnSendMsgToNextActivity.setOnClickListener {
+    val message: String = etUserMessage.text.toString() // getting the message
+    Toast.makeText(this, message, Toast.LENGTH_SHORT).show() // show the message as a toast
+
+    val intent = Intent(this, SecondActivity::class.java)
+    // ::class.java is the concept of Kotlin reflection
+    startActivity(intent)
+}
+```
+
+*Don't forget to declare the new Activity in `AndroidManifest.xml`!!* Not declaring it can cause your app to crash! It can be done like the following:
+
+`<activity android:name=".SecondActivity"></activity>`
+
+## Share Data using Explicit Intent
+Intent is an operation to be performed. Explicit intent means that you know the target activity! e.g. in the above we have the SecondActivity as the target activity.
+
+We can pass things to the intent! e.g. `intent.putExtra("key", msg)` where `msg` contains a string. The key has to be unique!
+
+To extract, go to the target activity. Use the `getExtra`, but not getters in Kotlin. Therefore we can have: `val bundle: Bundle? = intent.extras`. Specifically now we use the key to get the string! As such: `val msg = bundle!!.getString("key")`
+
+LinearLayout vertical orientation allows you to kind of automatically arrange and stack. Some attributes you learnt: textSize, textStyle, textColor, textAlignment, layout_margin(from all direction). 
+
+Now in SecondActivity you can have: `txvUserMessage.text = msg` to assign the `msg` to the view with id `txvUserMessage`
+
+## Share Data using Implicit Intent
+How to share data to other applications? Like e.g. Facebook, Whatsapp, etc. In Implicit Intent, you do not know your target activity
+
+Suppose you have a new view, and you can set a new listener like this:
+
+```kotlin
+btnShareToOtherApps.setOnClickListener {
+    val message: String = etUserMessage.text.toString()
+
+    val intent = Intent() // because this is implicit
+    intent.action = Intent.ACTION_SEND
+    intent.putExtra(Intent.EXTRA_TEXT, message) // EXTRA_TEXT is a recognized key between apps
+    intent.type = "text/plain"
+
+    startActivity(Intent.createChooser(intent, "Share to: "))
+}
+```
+
+---
+
