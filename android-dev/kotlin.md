@@ -227,7 +227,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 ```
 Essentially, you got to set the 1) layout manager and 2) the adapter to the view.
 
-Now the problem that we currently have is that the cards cannot be pressed. Nothing happens when you click on it. To change this, you should go to the innter class and make some inits!
+Now the problem that we currently have is that the cards cannot be pressed. Nothing happens when you click on it. To change this, you should go to the inner class and make some inits!
 ```kotlin
 inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     // I think this is adding properties to the class
@@ -268,6 +268,75 @@ inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     }
 }
 ```
+
+---
+# Section 4: Leverage the Power of Kotlin 
+## Code Cleanup
+Right now in our package, we would have a mixture of 5 things. We can actually create a further package to organise things. We can have packages of activities, models, and adapters.
+
+A little cleanup in `HobbiesActivity` is that you can create private function `setupRecycleView()` to abstract out the steps you used to do RecycleView. Self-documenting code!
+
+In the `.xml` files, you can also use Alt + Ctrl + l to reformat the code a little bit. I tried but this did not change anything but I guess it helps sometimes?
+
+## Implementing Extension Function
+A cool learning point: Context is the superclass of Activity.
+
+If you have an extension function to Context for `showToast`, you can abstract away all the `Toast.makeText ...`
+
+Create a new file called `Extensions.kt` and add this!
+```kotlin
+fun Context.showToast(message: String) {
+    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+}
+```
+
+## Using Default Parameters
+The above is cool, but what if we want to vary the duration? Enter default parameters!
+
+```kotlin
+fun Context.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(this, message, duration).show()
+}
+```
+
+So what is this saying? It says that `showToast` now can take 2 parameters, but the second one is `Toast.LENGTH_SHORT` by default. Essentially, you can just supply a function call with one parameter and it will still work fine because it uses the default values for those not supplied.
+
+So, `showToast("Hello World")` is equivalent to `showToast("Hello World", Toast.LENGTH_SHORT)`. But, doing the default parameters allow us to now do `showToast("Hello World", Toast.LENGTH_LONG)`
+
+Pretty cool, I'd say.
+
+## Applying Null Safety
+Basically rather than using the Not Null Assertion (`!!`), we can use safe calls (`?.`) or safe calls with let (`?.let { }). The examples he gave used safe calls with let. What it means is that if the expression before the safe call is a null, the expressions after let will not be executed
+
+I will not go into too much detail here because this is Kotlin syntax, which I have noted in my Kotlin notes.
+
+But aside from that, doing all this allows code to be more robust because you can avoid null pointer exceptions!
+
+## Using Companion Object and Object Declaration 
+
+The above two are similar to Static of Java. When we declare an object inside a class, we use companion object with the companion keyword. 
+
+The diff: Companion object is initialized when corresponding class is loaded. Object declarations are initialized lazily when accessed
+
+How is Companion Object useful? Suppose in MainActivity, you don't want to hardcore your "MainActivity" for the Log statements. What you can do is define a companion object as such:
+
+```kotlin
+companion object {
+    val TAG: String = MainActivity::class.java.simpleName
+}
+```
+
+and voila! Whenever you want to use the Log, you can just use the TAG.
+
+Another useful part of this is that you don't have to hardcode keys. You can create an `AppConstants.kt` to have object. E.g.
+
+```kotlin
+object Constants {
+    const val USER_MSG_KEY = "user_message"
+}
+```
+
+and now you can just use `Constants.USER_MSG_KEY` whenever you need it, instead of "user_message" because it is prone to typo!
 
 ---
 
