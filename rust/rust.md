@@ -1081,3 +1081,241 @@ let a [1, 2, 3, 4, 5];
 let slice = &a[1..3];
 ```
 The slice has type `&[i32]`. It works the same way as string slices.
+
+# 5. Using Structs to Structure Related Data
+A *struct* or *structure*, is a custom data type that lets you name and package together multiple related values that make up a meaningful group. In OOP terms, a *struct* is like an object's data attributes. We'll compare and contrast tuples with structs. Structs and enums are the building blocks for creating new types in your program's domain to take full advantage of Rust's compile time type checking.
+
+## 5.1. Defining and Instantiating Structs
+Structs are similar to tuples, but unlike tuples, you'll name each piece of data so it's clear what the values mean. As a result, structs are more flexible than tuples: you don't have to rely on order to specify or access.
+
+To define a struct, use the keyword `struct` and name the entire struct. Example:
+```rust
+struct User {
+    username: String,
+    email: String,
+    sign_in_count: u64,
+    active: bool,
+}
+```
+
+To use a struct after we've defined it, we create an *instance* of that struct by specifying concrete values for each of the fields. We create instance by stating the name of the struct and then add curly brackets containing `key: value` pairs. We don't have to specify fields in same order. For example:
+
+```rust
+let user1 = User {
+    email: String::from("someone@example.com"),
+    username: String::from("someusername123"),
+    active: true,
+    sign_in_count: 1,
+};
+```
+
+To get specific value, we use dot notation. If weanted email, we could use `user1.email`. If the instance is mutable, we can also change with dot notation and assign into a particular field:
+```rust
+user1.email = String::from("anotheremail@example.com"); // assuming you did `let mut user1`
+```
+
+Note that *entire* instance must be mutable. Rust doesn't allow to mark only certain fields as mutable. As per any expression, can just construct new instance as the last expression to implicitly return. Example:
+```rust
+fn build_user(email: String, username: String) -> User {
+    User {
+        email: email,
+        username: username,
+        active: true,
+        sign_in_count: 1,
+    }
+}
+```
+Notice for `email` and `username`, we are repating ourselves. There is a shorthand!
+### Using the Field Init Shorthand when Variables and Fields Have the Same Name
+We can rewrite `build_user` to behave exactly the same, but no repetition:
+```rust
+fn build_user(email: String, username: String) -> User {
+    User {
+        email,
+        username,
+        active: true,
+        sign_in_count: 1,
+    }
+}
+```
+
+### Creating Instances From Other Instances With Struct Update Syntax
+We can create new instance that uses most of an old instance's values using *struct update syntax*. The following shows it without:
+```rust
+let user2 = User {
+    email: String::from("another@example.com"),
+    username: String::from("anotherusername567"),
+    active: user1.active,
+    sign_in_count: user1.sign_in_count,
+};
+```
+The following shows the syntax:
+```rust
+let user2 = User {
+    email: String::from("another@example.com"),
+    username: String::from("anotherusername567"),
+    ..user1
+};
+```
+
+### Using Tuple Structs without Named Fields to Create Different Types
+You can also define structs that look similar to tuples called *tuple structs*. They have the added meaning the struct name provides but don't have names associated with fields.
+
+Defining it uses `struct` keyword, name, followed by types. Example:
+```rust
+struct Color(i32, i32, i32);
+struct Point(i32, i32, i32);
+
+let black = Color(0, 0, 0);
+let origin = Point(0, 0, 0);
+```
+`black` and `origin` are different types. Each struct is its own type.
+
+### Unit-Like Structs Without Any Fields
+Can define structs without fields called *unit-like structs*, because they behave similarly to `()`, the unit type. It can be useful when you need to implement a trait on some type but don't have any data that you want to store in the type itself.
+
+### Ownership of Struct Data
+We used `String` type rather than `&str` string slice type in the `User` struct defined above and this is a deliberate decision. It's possible for structs
+
+## 5.2. An Example Program Using Structs
+To understand when to use structs, let's write a program to calculate area of rectangle. Say we want to define a function to compute area. We have several options:
+
+```rust
+fn area(width: u32, height: u32) -> u32 {
+    width * height
+}
+```
+The problem with above is that the two parameters aren't explictly inter-related.
+
+Another option with tuple:
+```rust
+fn area(dimensions: (u32, u32)) -> u32 {
+    dimensions.0 * dimensions.1
+}
+```
+This is somewhat better as we are passing in one argument. However, we may not communicate our intent clearly with this. What does index `0` hold? It could be the height, or could be the width. If we mix this up we can cause errors.
+
+### Refactoring with Structs: Adding More Meaning:
+We use structs to add meaning by labelling the data. We can have:
+```rust
+fn area(rectaangle: &Rectangle) -> u32 {
+    rectangle.width * rectangle.height
+}
+```
+This is much more clearer in terms of intent. The parameter is an immutable borrow of a struct `Rectangle` instance. This is so that whichever function which calls `area` can retain ownership of it. 
+
+### Adding Useful Functionality with Deried Traits
+If we can print instance of `Rectangle`, that'd be nice. For example:
+```rust
+// ...
+// struct declaration for Rectangle
+// ...
+
+fn main() {
+    let rect1 = Rectangle {
+        width: 30,
+        height: 50,
+    };
+
+    println!("rect is {}", rect1);
+}
+```
+We get an error saying that `Rectangle` doesn't implement `std::fmt::Display`. We might find a helpful note to use `{:?}` for string formatting instead. Doing that will instead say that you didn't implement `std::fmt::Debug`.
+
+Rust *does* include functionality to print out debugging information, but we have to explicitly opt in to make that functionality available for our struct. We add annotation `#[derive(Debug)]` before struct definition:
+```rust
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+// ...
+// the main function
+// ...
+```
+
+It will work, not the prettiest, but will work. `{:#?}` will give you something prettier though.
+
+## 5.3. Method Syntax
+*Methods* are similar to functions, but methods are defined from the context of a struct (or an an enum, or a trait object covered later). Their first parameter is **always** `self`, which represents the instance of the struct the method is being called on.
+
+### Defining Methods
+We can change `area` function that has a `Rectangle` instance to make it an `area` method:
+```rust
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+
+fn main() {
+    let rect1 = Rectangle {
+        width: 30,
+        height: 50,
+    };
+
+    println!("Area is {}", rect1.area());
+}
+```
+
+We start with `impl` (implementation) block. Then we move `area` function within `impl`, and change first parameter to be `self`. In `main`, we called `area` method on our `Rectangle` instance.
+
+Signature for `area`: we use `&self` because Rust knows the type of `self` is `Rectangle` as it is inside the `impl Rectangle` context. Note that we still need to use the `&` before `self`. Methods can take ownership of `self`, borrow `self` immutably, or borrow `self` mutably.
+
+Here, the method is read-only, but if you wanted to write into it we can use `&mut self` as the first parameter.
+
+### Methods with More Paramaters
+Now let's define a method to see whether a `Rectangle` can fit completely within `self`. We define a `can_hold` method:
+```rust
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+}
+```
+Since `can_hold` is a method, we define it inside the `impl Rectangle` block. The method will take an immutable borrow of another `Rectangle` as a parameter and return a boolean.
+
+### Associated Functions
+Another useful feature of `impl` blocks is that we're allowed to define functions within `impl` blocks that *don't* take `self` as a parameter. For example: `String::from` associated function.
+
+Associated functions are often used for constructors that will return a new instance of the struct. For example, we could provide an associated function that would have one dimension parameter to create a square:
+```rust
+impl Rectangle {
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
+}
+```
+
+We can call this as such: `let sq = Rectangle::square(3);`.
+
+### Multiple `impl` Blocks
+Although this is valid, there might be no reason to do these separations here:
+```rust
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+
+impl Rectangle {
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+}
+```
+However, multiple `impl` blocks can be useful when we discuss generic types and traits.
