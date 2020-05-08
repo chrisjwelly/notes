@@ -6,7 +6,7 @@ I use WSL when learning Rust so I followed the command [here](https://www.rust-l
 
 ## 1.2. Hello, World!
 
-```rs
+```rust
 fn main() { 
 
 }
@@ -14,14 +14,14 @@ fn main() {
 
 ### Anatomy of a Rust Program
 This defines a function in Rust and the `main` function is the entry point.
-```rs
+```rust
 fn main() {
     println!("hello, world!");
 }
 ```
 
 The following does the work in the program:
-```rs
+```rust
     println!("hello, world!");
 ```
 Some things to note:
@@ -86,7 +86,7 @@ $ cargo build
 
 # 2. Programming a Guessing Game
 Some summary:
-```rs
+```rust
 match xxx {
     arm1 => do1, 
     arm2 => do2,
@@ -98,7 +98,7 @@ match xxx {
 ```
 
 When parsing, need to specify explicitly which number type is desired:
-```rs
+```rust
 let guess: u32 = match guess.trim().parse() {
     Ok(num) => num,
     Err(_) => continue,
@@ -111,7 +111,7 @@ Here, we desire u32, which `parse()` recognises.
 ## 3.1. Variables and Mutability
 
 Suppose we have the following code snippet:
-```rs
+```rust
 fn main() {
     let x = 5;
     println("{}", x);
@@ -125,13 +125,13 @@ The above will *give an error*. This is because the variable `x` is an immutable
 Declare with `const` keyword instead of `let`. Constants must be always immutable. Can be declared in any scope, including global.
 
 Constants may be set only to a constant expression. Not anything that happens during runtime. Example (Rust's naming convention for constants is to use all uppercase with underscores between words, and underscores can be inserted in numeric literals too):
-```rs
+```rust
 const MAX_POINTS: u32 = 100_000;
 ```
 
 ### Shadowing
 This is different from assigning things to variables! We can shadow by using the same variable's name and repeating the use of the `let` keyword as follows:
-```rs
+```rust
 fn main() {
     let x = 5;
     let x = x + 1;
@@ -144,14 +144,14 @@ fn main() {
 This will output, using value of `x` that is `12`. Again it's different from marking variable as `mut`, because we'll get compile-time error if we accidentally reassign. By using `let`, we can re-use a variable name while keeping the old variable as immutable.
 
 Nifty trick: Create new variable and use `let` keyword again, we can change the type of the value. For example:
-```rs
+```rust
 let spaces = "    ";
 let spaces = spaces.len();
 ```
 The above is valid even though the first `spaces` is string type and the second is int.
 
 Compare this to:
-```rs
+```rust
 let mut spaces = "     "
 spaces = spaces.len();
 ```
@@ -170,7 +170,7 @@ Integer overflow can also occur. When *compiling in debug mode* it can cause you
 #### Floating-Point Types
 Numbers with decimal points and can come with `f32` or `f64`. The default is `f64`.
 
-```rs
+```rust
 fn main() {
     let x = 2.0; // f64
     let y: f32 = 3.0; // f32
@@ -179,7 +179,7 @@ fn main() {
 
 #### Boolean Type
 Same as normal, `true` or `false`, and Boolean type is specified using `bool`.
-```rs
+```rust
 fn main() {
     let t = true;
 
@@ -190,7 +190,7 @@ fn main() {
 #### Character Type
 Rust supports letters too, Rust's `char` is the language's most primitive alphabetic type. (Note `char` uses single quotes compared to double quotes for string literals)
 
-```rs
+```rust
 fn main() {
     let c = 'z';
     let z = 'Z';
@@ -205,13 +205,13 @@ Groups multiple values into one type. Rust has two: tuples and arrays.
 #### The Tuple Type
 Tuples have fixed length: once declared, cannot grow or shrink in size. Write a comma-separated list in parenthesis. Each position has a type and *they can be different*.
 E.g.
-```rs
+```rust
 fn main() {
     let tup: (i32, f64, u8) = (500, 6.4, 1);
 }
 ```
 `tup` will bind the entire tuple, as a single compound element. You can destructure like this:
-```rs
+```rust
 fn main() {
     let tup = (500, 6.4, 1);
 
@@ -223,7 +223,7 @@ fn main() {
 The above snippet first binds `tup`, then it uses the pattern with `let` to take `tup` and turn it into separate variables `x`, `y`, `z`.
 
 We can also access element directly using period (`.`), followed by the index of the value we want to access:
-```rs
+```rust
 fn main() {
     let tup = (500, 6.4, 1);
 
@@ -238,7 +238,7 @@ fn main() {
 #### Array Type
 Unlike Tuple, Array must have same type. Arrays in Rust have a fixed length, written as a comma-separated list inside square brackets:
 
-```rs
+```rust
 fn main() {
     let a = [1, 2, 3, 4, 5];
 }
@@ -250,20 +250,20 @@ To write an array type in square brackets:
 * Semicolon
 * Number of elements in the array
 
-```rs
+```rust
 let a: [i32; 5] = [1, 2, 3, 4, 5];
 ```
 
 Here, `i32` is the type of each element and we have 5 elements.
 
 Alternative syntax for initializing an array: if you want to create an array that contains *same value* for each element, can specify initial value instead of the type in the way to do it above:
-```rs
+```rust
 let a = [3; 5]; // shorthand for let a = [3, 3, 3, 3, 3]
 ```
 
 #### Accessing Array Elements
 Using array indexing like normal:
-```rs
+```rust
 fn main() {
     let a = [1, 2, 3, 4, 5];
 
@@ -274,7 +274,7 @@ fn main() {
 
 #### Invalid Array Element Access
 When you access an element that is past the end of array?
-```rs
+```rust
 // This code panics!
 fn main() {
     let a = [1, 2, 3, 4, 5];
@@ -287,7 +287,7 @@ The compilation didn't produce any errors, but it resulted in a *runtime* error 
 
 ## 3.3. Functions
 Rust uses `snake_case` as the style for function and variable names. Example of function definitions:
-```rs
+```rust
 fn main() {
     println!("Hello world!");
 
@@ -301,7 +301,7 @@ fn another_function() {
 
 ### Function Parameters
 Examples of using parameters and passing an argument:
-```rs
+```rust
 fn main() {
     another_function(5); // passing an argument 5
 }
@@ -311,7 +311,7 @@ fn another_function(x: i32) {
 }
 ```
 In function signatures you **must** declare the type of each parameter. When you want to have multi parameters, separate with commas:
-```rs
+```rust
 fn main() {
     another_function(5); // passing an argument 5
 }
@@ -331,14 +331,14 @@ Rust is expression-based, so it's important to understand the distinction:
 * *Statements* are instructions that perform some action and do not return a value.
 * *Expressions* evaluate to a resulting value
 
-```rs
+```rust
 fn main() {
     let y = 6; // this is a statement
 }
 ```
 
 Since assignment is a statement, you can't assign `let` to another variable:
-```rs
+```rust
 fn main() {
     let x = (let y = 6); // error!
 }
@@ -353,7 +353,7 @@ Some expressions:
 * Block that we use to create new scopes, `{}`
 
 Example:
-```rs
+```rust
 fn main() {
     let x = 5;
 
@@ -366,7 +366,7 @@ fn main() {
 }
 ```
 This expression:
-```rs
+```rust
 {
     let x = 3;
     x + 1
@@ -378,7 +378,7 @@ is a block that in this case evaluates to `4`. **IMPORTANT**: the `x + 1` is *wi
 We don't name return values, but declare type after an arrow (`->`). In Rust, the return value is value of the final expression in the block of the body of a function. Can return early using `return` but most functions return implicitly.
 
 Example:
-```rs
+```rust
 fn five() -> i32 {
     5
 }
@@ -392,7 +392,7 @@ fn main() {
 The `five()` function is perfectly valid! And because `five()` returns, the line `let x = five()` is the same as `let x = 5;`.
 
 Another example:
-```rs
+```rust
 fn main() {
     let x = plus_one(5);
 
@@ -411,7 +411,7 @@ Comments use `//`. Need to include `//` on each line if it extends beyond a sing
 ## 3.5. Control Flow
 ### `if` expressions
 Example:
-```rs
+```rust
 fn main() {
     let number = 3;
 
@@ -430,7 +430,7 @@ Note: the condition **must** be a `bool`. If it's a `bool`, we will get an error
 
 ### Multiple conditions with `else if`
 Example:
-```rs
+```rust
 fn main() {
     let number = 6;
 
@@ -448,7 +448,7 @@ fn main() {
 
 ### Using `if` in a `let` statement
 Because `if` is an expression, we can use it on the right side of `let`:
-```rs
+```rust
 fn main() {
     let condition = true;
     let number = if condition { 5 } else { 6 };
@@ -462,7 +462,7 @@ The `number` variable will be bound to value based on the outcome of `if` expres
 Recall: blocks evaluate to last expression, and numbers by themselves are also expressions.
 
 Values that have the potential to be results must be of the same type. If types are mismatched like the following example, we can get an error:
-```rs
+```rust
 fn main() {
     let condition = true;
 
@@ -478,7 +478,7 @@ Rust has three kinds of loops: `loop`, `while`, `for`
 
 #### Usage of `loop`
 The `loop` keyword executes a block of code over and over again forever.
-```rs
+```rust
 fn main() {
     loop {
         println!("again");
@@ -490,7 +490,7 @@ Rust provides a reliable way to break out a loop using the `break` keyword.
 
 #### Returning Values from Loops
 One use of `loop` is to retry operation you know might fail, such as checking whether a thread has completed its job. But you might need to pass the result to the rest of the code. To do this, you can add value you want returned after the `break` expression you use to stop the loop. That value will be returned, as shown:
-```rs
+```rust
 fn main() {
     let mut counter = 0;
 
@@ -510,7 +510,7 @@ Before loop, we declared `counter`, initialising it to `0`. We loop and use the 
 
 ### Conditional Loops with `while`
 Example:
-```rs
+```rust
 fn main() {
     let mut number = 3;
     while number != 0 {
@@ -526,7 +526,7 @@ fn main() {
 ### Looping Through a Collection with `for`
 You could use the `while` construct to loop over the elements of a collection, such as an array.
 
-```rs
+```rust
 fn main() {
     let a = [10, 20, 30, 40, 50];
     let mut index = 0;
@@ -540,7 +540,7 @@ fn main() {
 ```
 
 But this approach is error prone, because it can cause programs to panic if the index length is incorrect. We can use a `for` loop and execute some code for each item in a collection. Example:
-```rs
+```rust
 fn main() {
     let a = [10, 20, 30, 40, 50];
 
@@ -554,7 +554,7 @@ Most Rustacenas would use a `for` loop as well. To do that we use `Range` which 
 
 Countdwn would look like this using a `for` loop and another method `rev` which reverses the range:
 
-```rs
+```rust
 fn main() {
     for number in (1..4).rev() {
         println!("{}!", number);
@@ -589,11 +589,11 @@ These are the main rules:
 
 ### Variable Scope
 First example of ownership, we'll look at the *scope* of some variables. Variable looks like this:
-```rs
+```rust
 let s = "hello";
 ```
 Variable `s` refers to a string literal. The variable is valid from the point at which it's delared until the end of the current *scope*. More comments:
-```rs
+```rust
 {   // s is not valid here, it's not yet been declared
     let s = "hello"; // s is valid from this point forward
 
@@ -610,14 +610,14 @@ Now let's build on top of this understanding by introducing `String` type
 ### The `String` Type
 `String` is different from string literals (where a string value is hardcoded into our program). Not every string value can be known when we write our code: for example, what if we want to take user input and store it? Rust has a second string type `String`. This type is allocated on the heap and as such is able to storea na amount of text unknown to us at compile time. You can create a `String` from a string literal using the `from` function:
 
-```rs
+```rust
 let s = String::from("hello");
 ```
 
 The double colon (`::`) is an operator that allows us to namespace this particular `from` function under the `String` type rather than using some sort of name like `string_from`.
 
 This kind of string *can* be mutated:
-```rs
+```rust
 let mut s = String::from("hello");
 
 s.push_str(", world!"); // push_str() appends a literal to a String
@@ -638,7 +638,7 @@ Second part is different. With garbage collector, this is easy. With manual memo
 
 Rust takes a different path: the memory is automatically returned once the variable that owns it goes out of scope. 
 
-```rs
+```rust
 {
     let s = String::from("hello"); // s is valid from this point on
 
@@ -651,14 +651,14 @@ This may be simple right now, but behavior of code can be unexpected in more com
 
 #### Ways Variables and Data Interact: Move
 Multiple vars can interact with the same data in different ways in Rust.
-```rs
+```rust
 let x = 5;
 let y = x;
 ```
 We can uess what's this doing: "bind value of `5` to `x`, then *make a copy* of the value in `x` and bint it to `y`". We now have two variables, `x` and `y`, and both equal `5`.
 
 `String` version:
-```rs
+```rust
 let s1 = String::from("hello");
 let s2 = s1;
 ```
@@ -671,7 +671,7 @@ When we assign `s1` to `s2`, the `String` data is copied, meaning we copy the po
 Earlier: variable goes out of scope, Rust calls `drop` automatically to clean up. But this is a problem: when `s2` and `s1` go out of scope, they will both try to free the same memory. This is known as *double free* error and is one of the memory safety bugs we mentioned previously. Freeing memory twice can lead to memory corruption, which can potentially lead to security vulnerabilities.
 
 To ensure memory safety, there's on more detail. Instead of trying to copy allocated memory, Rust considers `s1` to no longer be valid and, therefore Rust doesn't need to free anything when `s1` goes out of scope. Check out what happens when you try to use `s1` after `s2` is created:
-```rs
+```rust
 let s1 = String::from("hello");
 let s2 = s1;
 
@@ -685,7 +685,7 @@ Implication: Rust will never automatically create "deep" copies of data. Any *au
 
 #### Ways Variables and Data Interact: Clone
 If we do want to deeply copy the heap data of `String`, we can use a common method called `clone`. Example:
-```rs
+```rust
 let s1 = String::from("hello");
 let s2 = s1.clone();
 
@@ -695,7 +695,7 @@ Works just fine and create a copy of the heap data. When you call `clone`, you k
 
 #### Stack-Only Data: Copy
 This code is valid:
-```rs
+```rust
 let x = 5;
 let y = x;
 
@@ -714,7 +714,7 @@ General rule of thumb: group of simple scalar values can be `Copy`. Examples:
 
 ### Ownership and Functions
 The semantics for passing a value to a function are similar to those for assigning value to variable. Passing variable to function will move or copy just like assignment. Examples:
-```rs
+```rust
 fn main() {
     let s = String::from("hello"); // s comes into scope
 
@@ -740,7 +740,7 @@ If we tried to use `s` after the call to `takes_ownership`, Rust would throw com
 
 ### Return Values and Scope
 Returning values can also transfer ownership. Example:
-```rs
+```rust
 fn main() {
     let s1 = gives_ownership(); // gives ownership moves its return value into s1
 
@@ -768,7 +768,7 @@ fn takes_and_gives_back(a_string: String) -> String { // a_string comes into sco
 The ownership of a varaible follows the same pattern every time: assigning a value to another variable moves it. When a variable that includes data on the heap goes out of scope, the value will be cleand up by `drop` unless the data has been moved to be owned by another variable.
 
 Taking ownership and then returning for function can be tedious. It's possible to return multiple values using tuple, as shown here:
-```rs
+```rust
 fn main() {
     let s1 = String::from("hello");
 
@@ -787,7 +787,7 @@ BUT, this is too much work for a concept that should be common. So luckily, Rust
 
 ## 4.2. References and Borrowing
 How you define and use a `calculate_length` function that has a reference to an object as a parameter *instead of taking ownership of the value*:
-```rs
+```rust
 fn main() {
     let s1 = String::from("hello");
 
@@ -807,7 +807,7 @@ Note: The opposite of referencing is dereferencing, acoomplished with the derefe
 Taking a closer look, the `&s1` syntax lets us create a reference that *refers* to the *value* of `s1` but does not own it. Because it dows not own it, the value it points to will not be dropped when the *reference* goes out of scope.
 
 Likewise, the signature of the function uses `&` to indicate that the type of the parameter `s` is a reference. Adding some annotations:
-```rs
+```rust
 fn calculate_length(s: &String) -> usize { // s is a reference to a String
     s.len()
 } // Here, s goes out of scope. But because it does not have ownership of what it refers to,
@@ -817,7 +817,7 @@ fn calculate_length(s: &String) -> usize { // s is a reference to a String
 The scope of `s` is valid, but when it goes out of scope, we don't need to drop what `s` reference points to because we don't have ownership. We call having references as function parameters *borrowing*.
 
 Attempt to try to modify something we're borrowing:
-```rs
+```rust
 fn main() {
     let s = String::from("hello");
 
@@ -832,7 +832,7 @@ Just as variables are immutables by default, references too.
 
 ### Mutable References
 We can fix it with small tweak (basically add `mut` to everything):
-```rs
+```rust
 fn main() {
     let mut s = String::from("hello");
 
@@ -863,7 +863,7 @@ Benefit: prevent data races. A *data race* is similar to a race condition and ha
 Data races cause undefined behavior and can be difficult to diagnose and fix when trying to track them down at runtime. 
 
 As always, we can use curly brackets to create a new scope, allowing for multiple mutable references, just not *simultaneous* ones:
-```rs
+```rust
 let mut s = String::from("hello");
 {
     let r1 = &mut s;
@@ -872,7 +872,7 @@ let mut s = String::from("hello");
 let r2 = &mut s;
 ```
 Similar rule for mix and match of mutable and immutable references:
-```rs
+```rust
 let mut s = String::from("hello");
 
 let r1 = &s; // no problem
@@ -884,7 +884,7 @@ println!("{}, {}, and {}", r1, r2, r3);
 We *also* cannot have mutable reference while we have immutable ones. Users of immutable reference don't expect values to suddenly change out from under them. Multiple immutable ok though because they are read-only.
 
 Note that a reference's scope starts from where it is introduced and continues through the last time that reference is used. This is ok:
-```rs
+```rust
 let mut 1
 let mut s = String::from("hello");
 
@@ -902,7 +902,7 @@ The scopes of immutable references end after the first `println!`, which is befo
 *Dangling pointer* is a pointer that references a location in memory that may have been given to someone else, by freeing some memory while preserving a pointer to that memory. In Rust, compiler guarantees that reference will never be dangling. If you have reference to some data, the compiler will ensure that data will not go out of scope before the reference does.
 
 Example which will give compile error:
-```rs
+```rust
 fn main() {
     let reference_to_nothing = dangle();
 }
@@ -916,7 +916,7 @@ fn dangle() -> &String {
 This gives some error related to lifetimes which is to be covered in Chapter 10. But the msg of this error is clear: "this function's return type contains a borrowed value, but there is no value for it to be borrowed from"
 
 Taking a closer look...
-```rs
+```rust
 fn dangle() -> &String { // dangle returns a reference to a String
     let s = String::from("hello"); // s is a new String
 
@@ -926,7 +926,7 @@ fn dangle() -> &String { // dangle returns a reference to a String
 Because `s` is created inside `dangle`, when the code of `dangle` is finished, `s` will be deallocated but we tried to return a reference of it! That means this reference would be pointing to an invalid `String`!
 
 The solution is to return directly:
-```rs
+```rust
 fn no_dangle() -> String {
     let s = String::from("hello");
 
@@ -946,11 +946,11 @@ Another type that does not have ownership is *slice*. It lets you reference a co
 Motivating problem: write a function that takes a string and returns the first word it finds in that string. If no space, return the whole word.
 
 Function signature?
-```rs
+```rust
 fn first_word(s: &String) -> ?
 ```
 The function has a `&String` as parameter. Since we don't want ownership, this is fine. But what should we return? We don't really have a way to talk about *part* of string. But we could return the index of the end of the word. For example:
-```rs
+```rust
 fn first_word(s: &String) -> usize {
     let bytes = s.as_bytes(); // convert to array of bytes
 
@@ -966,7 +966,7 @@ fn first_word(s: &String) -> usize {
 Because we need to go through `String`, we'll convert it to array of bytes first.
 
 Next, we create iterator over the array of bytes with `iter` method:
-```rs
+```rust
 for (i, &item) in bytes.iter().enumerate() 
 ```
 `iter` is a method that returns each element in a collection, `enumerate` wraps the result of `iter` and returns each element as part of a tuple instead. First elem there is the index, and second element is a reference to the element. This is more convenient that calculating the index ourselves.
@@ -976,7 +976,7 @@ Because `enumerate` returns a tuple, we can destructure it. In the `for` loop, w
 Inside the `for` loop, we search byte that represents space using byte literal. If we find a space, we return that position. Otherwise, return length of string using `s.len()`.
 
 New problem: we're returning a `usize` on its own, but it's meaningful only in the context of `&String`. Because it's a separate value from `String`, there's no guarantee that it will still be valid in the future. Consider this:
-```rs
+```rust
 fn main() {
     let mut s = String::from("hello world");
 
@@ -996,7 +996,7 @@ Solution: string slices.
 
 ### String Slices
 A *string slice* is reference to part of a `String`, looking like this:
-```rs
+```rust
 let s = String::from("hello world");
 
 let hello = &s[0..5];
@@ -1007,7 +1007,7 @@ Similar to referencing whole `String` but with extra `[0..5]` bit. It references
 We can create slices using a range within brackets by specifying `[starting_index..ending_index]` where we reference starting from `starting_index` inclusive to `ending_index` exclusive. Internally the slice stores: starting position, and length of slice. 
 
 Some syntactic sugar:
-```rs
+```rust
 let s = String::from("hello");
 
 // the 2 below are equivalent
@@ -1026,7 +1026,7 @@ let slice = &s[..];
 ```
 
 Rewriting the `first_word` function:
-```rs
+```rust
 fn first_word(s: &String): &str {
     let bytes = s.as_bytes();
 
@@ -1042,7 +1042,7 @@ fn first_word(s: &String): &str {
 Now, we get back a single value that is tied to the underlying data. The value is made up of a reference to the starting point of the lsice and number of elements in the slice.
 
 We will get compile-time errors for the previous problem we faced when we try to clear a `String` when we have its slice:
-```rs
+```rust
 fn main() {
     let mut s = String::from("hello world");
 
@@ -1056,18 +1056,18 @@ fn main() {
 
 #### String Literals Are Slices
 Consider this:
-```rs
+```rust
 let s = "Hello, world!";
 ```
 The type of `s` here is `&str`: it's a slice pointing to that specific point of the binary. This is also why string literals are immutable; `&str` is an immutable reference
 
 #### String Slices as Parameters
 We can make an improvement on the `first_word` from:
-```rs
+```rust
 fn first_word(s: &String) -> &str 
 ```
 to:
-```rs
+```rust
 fn first_word(s: &str) -> &str
 ```
 
@@ -1075,7 +1075,7 @@ If we have string slice, we can pass that directly and if we have `String`, we c
 
 ### Other Slices
 There's a more general slice type than string:
-```rs
+```rust
 let a [1, 2, 3, 4, 5];
 
 let slice = &a[1..3];
