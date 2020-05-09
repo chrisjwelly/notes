@@ -1319,3 +1319,318 @@ impl Rectangle {
 }
 ```
 However, multiple `impl` blocks can be useful when we discuss generic types and traits.
+
+# 6. Enums and Pattern Matching
+*Enumerations*, also referred to as *enums*. It allows you to define a type by enumerating its possible *variants*.
+
+## 6.1. Defining an Enum
+Motivating example: working with IP addresses, which currently has two major variants: version four and version six. We can *enumerate* all possible variants.
+
+IP Address can be either v4 or v6 but not both at the same time. Enum is appropriate as an enum can only be one of its variants. We can express it like this:
+
+```rust
+enum IpAddrKind {
+    V4,
+    V6
+}
+```
+`IpAddrKind` is now a custom data type that we can use elsewhere in our code. 
+
+### Enum Values
+Creating instances:
+```rust
+let four = IpAddrKind::V4;
+let six = IpAddrKind::V6;
+```
+Variants of enum are namespaced under its indentifier. We can use double colon to separate the two. This is useful because they are both the same type: `IpAddrKind` and can define a funciton that takes any `IpAddrKind`:
+```rust
+fn route(ip_kind: IpAddrKind) {}
+```
+and thus can call either variant:
+```rust
+route(IpAddrKind::V4);
+route(IpAddrKind::V6);
+```
+
+Some potential useful thing about enum:
+```rust
+enum IpAddrKind {
+    V4,
+    V6,
+}
+
+struct IpAddr {
+    kind: IpAddrKind,
+    address: String,
+}
+
+let home = IpAddr {
+    kind: IpAddrKind::V4,
+    address: String::from("127.0.0.1"),
+};
+
+let loopback = IpAddr {
+    kind: IpAddrKind::V6,
+    address: String::from("::1"),
+};
+```
+Above we defined a struct with two fields. We also gave two instances of this struct. We've used struct to bundle the `kind` and `address` values together. So now the variant is associated with the value.
+
+But we can use enum to be **more concise**. We can put data directly int oeach enum variant:
+```rust
+enum IpAddr {
+    V4(String),
+    V6(String),
+}
+
+let home = IpAddr::V4(String::from("127.0.0.1"));
+
+let loopback = IpADdr::V6(String::from("::1"));
+```
+
+Another possible advantage: each variant can have different types and amounts of associated data:
+```rust
+enum IpAddr {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+
+let home = IpAddr::V4(127, 0, 0, 1);
+
+let loopback = IpAddr::V6(String::from("::1"));
+```
+Note: the standard library has a definition we can use!
+
+Another example, with a wide variety of types embedded:
+```rust
+enum Message {
+    Quit,
+    Move { x: i32, y: i32},
+    Write(String),
+    ChangeColor(i32, i32, i32),
+}
+```
+Four variants in there:
+* `Quit` has no data associated with it at all.
+* `Move` includes anonymous struct.
+* `Write` includes a single `String`.
+* `ChangeColor` includes three `i32`
+
+Here we see a version using struct instead of enum:
+```rust
+struct QuitMesage; // unit struct
+struct MoveMessage {
+    x: i32,
+    y: i32,
+}
+struct WriteMessage(String); // tuple struct
+struct ChangeColorMessage(i32, i32, i32); // tuple struct
+```
+However a drawback of using many structs is that each of them have their own type and we can't easily define a function to take any of these kinds of messages as we could with `Message` enum.
+
+Similarity between enums and structs: we can define methods on enums:
+```rust
+impl Message {
+    fn call(&self) {
+        // method body
+    }
+}
+
+let m = Message::Write(String::from("hello"));
+m.call();
+```
+Should be pretty self explanatory! The method call will make use of the immutable borrow `self` and do something with it.
+
+### The `Option` Enum and its Advantages Over Null Values
+Used to encode whether a value is something or it could be nothing. Expressing this concept in terms of the type system means the compiler can check wheter you've handled all cases you should be handling.
+
+Rust doesn't have the null feature that many other languages have. Problem with null is that if you try to use a null value as a not-null value, you'll get an error of some kind. But the concept is still useful.
+
+While Rust does not have nulls, it has an enum `Option<T>` that is defined like this:
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+```
+This is so useful that it's even included in the prelude. Its variants: `Some` and `None` can be used directly without the `Option::` prefix.
+
+`<T>` is a generic. It can hold one piece of data of any type. Examples:
+```rust
+let some_number = Some(5);
+let some_string = Some("a string");
+
+let absent_number: Option<i32> = None;
+```
+If we use `None` rather than `Some`, we need to tell rust what type of `Option<T>` we have because compiler cannot infer things.
+
+Despite `None` being a similar concept as null, `Option<T>` is a better option than null because `Option<T>` and `T` are different types. The compiler won't let us use an `Option<T>` value as if it were definitely a valid value. For example:
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = x + y;
+```
+The error we get is that Rust doesn't understand how to add an `i8` and an `Option<i8>`, because the're different. Only when we have `Option<i8>` do we have to worry about possibly not having a value, and the compiler will make sure we handle that before using the value.
+
+i.e. need to convert `Option<T>` to a `T`. It helps catch one of the most common issues with null: assuming something isn't null when it actually is.
+
+Everywhere that a value has a type that isn't `Option<T>`, you *can* safely assume that the value isn't null. If something is possibly null, you ned to wrap it, and when you do you need to deliberately handle the case explicitly when it is null.
+
+In general, in order to use an `Option<T>`, you want to have code that handles each variant `Some(T)` and `None`. The `match` expression is a control flow construct that does just this: will run different code depending on which variant of the enum it has.
+
+## 6.2. The `match` Control Flow Operator
+`match` is like a coin-sorting machine. It keeps finding for the first track that "fits". Example:
+
+```rust
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter,
+}
+
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => 1,
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter => 25,
+    }
+}
+```
+This is similar to an `if`, but note that here it can be any type!
+
+The `match` arms has two parts: a pattern and some code. The first arm here has a pattern that is the value of `Coin::Penny` and then the `=>` operator separates the pattern and code to run. Here code is just `1`. Each arm is separated from the next with a comma.
+
+Code associated with each arm is an expresison, and the resulting value of the expression in the matching arm is the value that gets returned for the entire `match` expression.
+
+If short, no need curly braces for the code in an arm. Run multiple lines you can use curly braces though:
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => {
+            println!("Lucky!");
+            1
+        } // christian's note: apparently you don't need a comma
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter => 25,
+    }
+}
+```
+
+### Patterns that Bind to Values
+Match arms are useful because they can bind to the parts of the values that match the pattern. This is extracting values out of enum variants.
+
+Let's have for example:
+```rust
+#[derive(Debug)] // so we can inspect the state in a minute
+enum UsState {
+    Alabama,
+    Alaska,
+    // --snip--
+}
+
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter(UsState),
+}
+```
+Let's imagine that we are trying to collect all 50 state quarters. But we will call out the name of the state associated with each quarter. In the match expression, we add a variable called `state`. When a `Coin::Quarter` matches, the `state` variable will bind to the value of that quarter's state:
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => 1,
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter(state) => {
+            println!("State quarter from {:?}!", state);
+            25
+        }
+    }
+}
+```
+If we were to call `value_in_cents(Coin::Quarter(UsState::Alaska))`, `coin` would be `Coin::Quarter(UsState::Alaska)`. When we found the matching arm, we bind the `state` to the value `UsState::Alaska`.
+
+### Matching with `Option<T>`
+We wanted to get inner `T` out of `Some` when using `Option<T>`. We can ue `match` here:
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        None => None,
+        Some(i) => Some(i + 1),
+    }
+}
+
+let five = Some(5);
+let six = plus_one(five);
+let none = plus_one(None);
+```
+Combining `match` and enums is useful in many situations. This pattern is very common in Rust code: `match` against an enum, bind a variable to the data inside, and then execute code based on it.
+
+### Matches Are Exhaustive
+This won't compile:
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        Some(i) => Some(i + 1),
+    }
+}
+```
+Because we didn't handle the `None` case and this code will cause a bug.
+
+Matches in Rust are *exhaustive*: must exhaust every last possibility in order for the code to be valid.
+
+### The `_` Placeholder
+Well, just in case we don't want to list all possible values, Rust provides us with a way also:
+```rust
+let some_u8_value = 0u8;
+match some_u8_value {
+    1 => println!("one"),
+    3 => println!("three"),
+    5 => println!("five"),
+    7 => println!("seven"),
+    _ => (),
+}
+```
+The `_` pattern will match any value, and by putting it after our other arms, it will match all the possible cases not specified before it. The `()` is just unit value, and nothing will happen in the `_` case. As a result we can say that we want to do nothing using the unit value.
+
+### 6.3. Concise Control flow with `if let`
+It combines `if` and `let` into a less verbose way to handle values that match one pattern while ignoring the rest. Consider this:
+```rust
+let some_u8_value = Some(0u8);
+match some_u8_value {
+    Some(3) => println!("three"),
+    _ => (),
+}
+```
+This is fine, but we can consider doing this instead:
+```rust
+if let Some(3) = some_u8_value {
+    println!("three");
+}
+```
+The syntax for `if let` takes a pattern and an expression separated by an equal sign. It works the same way as a `match`, where the expression is given to the `match` and the pattern is its first arm.
+
+Choosing between `match` and `if let` depends on what you're doing: whether gaining conciseness is an appropriate trade-off for losing exhaustive checking.
+
+We can include `else` with an `if let`. It's the same as the block of code that would go with the `_` case. Consider the normal version:
+```rust
+let mut count = 0;
+match coin {
+    Coin::Quarter(state) => println!("State quarter from {:?}!", state),
+    _ => count += 1,
+}
+```
+or we could use `if let` with `else`:
+```rust
+let mut count = 0;
+if let Coin::Quarter(state) = coin {
+    println!("State quarter form {:?}!", state);
+} else {
+    count += 1;
+}
+```
