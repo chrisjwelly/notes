@@ -2066,3 +2066,369 @@ pub fn add_to_waitlist() {}
 ```
 
 The module tree remains the same, and all the function calls will work without any modification. The `mod` keyword declares modules, and Rust looks in a file with the same name as the module for the code that goes into that module.
+
+# 8. Common Collections
+*Collections* can contain multiple values. Unlike built-in array and tuple types, the data these collections point to is stored on the heap, which means it can grow and shrink.
+
+We'll discuss three collections: *vector*, *string* and *hash map*.
+
+## 8.1. Storing Lists of Values with Vectors
+`Vec<T>` is also known as *vector*, more than one value in a single data structure and puts values next to each other in memory. Only one value of the same type.
+
+### Creating a New Vector
+To create a new, empty vector, we can call the `Vec::new` function:
+```rust
+let v: Vec<i32> = Vec::new();
+```
+We added a type annotation, because we aren't inserting any values into this vector and Rust doesn't know what kind of elements we are storing.
+
+If we are being more realistic, Rust can often infer the type of value you want to store once you insert values. It's more common to create a `Vec<T>` that has initial values and Rust provides `vec!` macro. It will create a new vector that holds the values you give it. This example stores values `1`, `2`, `3`, and Rust infers the `i32` type:
+```rust
+let v = vec![1, 2, 3];
+```
+
+### Updating a Vector
+Use `push` method:
+```rust
+let mut v = Vec::new();
+v.push(5);
+v.push(6);
+```
+As with variable, if we want to change its value, we need to use `mut`.
+
+### Dropping a Vector Drops Its Elements
+Like any other `struct`, a vector is freed when it goes out of scope:
+```rust
+{
+    let v = vec![1, 2, 3, 4];
+}
+```
+When vector gets dropped, all of its contents are dropped. Those integers are cleaned up. Useful when you introduce reference to elements of vector.
+
+### Reading Elements of Vectors
+There are two ways to reference a value stored in vector. We annotate the types of values returned for extra clarity.
+```rust
+let v = vec![1, 2, 3, 4, 5];
+
+let third: &i32 = &v[2];
+println!("The third element is {}", third);
+
+match v.get(2) {
+    Some(third) => println!("The third element is {}", third),
+    None => printlnt!("There is no third element."),
+}
+```
+First we use the index value of `2` to get third element. Two ways to get third element are by using `&` and `[]` which gives us a reference, OR by using `get` method with the index passed as argument, giving us an `Option<&T>`.
+
+You can choose how the program behaves when you try to use an index value that vector doesn't have element for. Let's try this:
+```rust
+// This code panics!
+let v = vec![1, 2, 3, 4, 5];
+
+let does_not_exist = &v[100];
+let does_not_exist = v.get(100);
+```
+The first `[]` method will cause program to panic. When `get` method is passed an index outside of vector, it returns `None` without panicking. You can use this with a `match` expression to handle either cases.
+
+When the program has a valid reference, the borrow checker enforces the ownership and borrowing rules to ensure this reference and any other references remain valid. Recall: you can't have mutable and immutable references in the same scope.
+
+```rust
+// Won't compile
+let mut v = vec![1, 2, 3, 4, 5];
+
+let first = &v[0]; // immutable borrow occurs
+
+v.push(6); // mutable borrow
+
+println!("The first element is: {}", first); // immutable borrow used here
+```
+This error is because adding new element onto end of vector might require allocating new memory and copying the old elements to the new space. Borrowing rules prevent programs from ending up in situation of reference to first element pointing to deallocated memory.
+
+### Iterating over the Values in a Vector
+We can iterate through elements rather than use indices to access one at a time. We get immutable references here.
+```rust
+let v = vec![100, 32, 57];
+for i in &v {
+    printlnt!("{}", i);
+}
+```
+Mutable reference version:
+```rust
+let mut v = vec![100, 32, 57];
+for i in &mut v {
+    *i += 50;
+}
+```
+We have to use the dereference operator (`*`) to get to the value in `i` before we can use `+=` operator.
+
+### Using an Enum to Store Multiple Types
+Variants of an enum are defined under the same enum type, so we when we need to store elements of a different type in vector, we can define and use an enum.
+
+For example we can do this:
+```rust
+enum SpreadsheetCell {
+    Int(i32),
+    Float(f64),
+    Text(String),
+}
+
+let row = vec![
+    SpreadsheetCell:Int(3),
+    SpreadsheetCell::Text(String::from("blue")),
+    SpreadsheetCell::Float(10.12),
+];
+```
+Rust needs to know what types will be in the vector at compile time to properly allocate memory on the heap. Using an enum plus a `match` expression means that Rust will ensure at compile time that every possible case is handled.
+
+## 8.2. Storing UTF-8 Encoded Text with Strings
+Common problems:
+* Rust's propensity for exposing possible errors
+* Strings being a more complicated data structure that many programmers give them credit for
+* UTF-8
+
+String is a collection of bytes, plus some methods to provide useful functionality when those bytes are interpreted as text. 
+
+### What Is a String?
+Rust has only one string type in the core language, which is the string slice `str` that is usually in its borrowed form `&str`. *String slices* are references to some UTF-8 encoded string data stored elsewhere.
+
+The `String` type, is a growable, mutable, owned, UTF-8 encoded String type.
+
+Rust's std also include other string types: `OsString`, `OsStr`, `CString`, and `CStr`. These can store text in different encodings.
+
+### Creating a new String
+Ez example:
+```rust
+let mut s = String::new();
+```
+Sometimes we already have some initial data. We use `to_string` which is available on any type that implements the `Display` trait, as string literals do
+
+```rust
+let data = "initial contents";
+
+let s = data.to_string();
+
+// the method also works on a literal directly:
+let s = "initial contents".to_string();
+```
+We can also use `String::from`:
+```rust
+let s = String::from("initial contents");
+```
+
+Recall that strings are UTF-8 encoded, so we can include any properly encoded data in them. See the book for examples.
+
+### Updating a String
+You can push data into string, or conveniently use `+` operator or the `format!` macro to concatenate.
+
+#### Appending to a String with `push_str` and `push`
+We can grow a `String` by using `push_str` method to append a string slice:
+```rust
+let mut s = String::from("foo");
+s.push_str("bar");
+```
+`push_str` takes a string slice, because we don't want ownership of parameter. Take a look:
+```rust
+let mut s1 = String::from("foo");
+let s2 = "bar";
+s1.push_str(s2);
+println!("s2 is {}", s2);
+```
+This code works as we'd expect because `push_str` doesn't take ownership!
+
+`push` on the other hand only takes a single character:
+```rust
+let mut s = String::from("lo");
+s.push('l');
+```
+
+#### Concatenation with the `+` Operator or the `format!` Macro
+You often want to combine two existing strings. One way is to use `+` operator:
+```rust
+let s1 = String::from("Hello, ");
+let s2 = String::from("world!");
+let s3 = s1 + &s2; // note s1 has been moved here and can no longer be used
+```
+The reason `s1` is no longer valid and why we reference `s2` is because of the signature of the method called when using `+`:
+```rust
+fn add(self, s: &str) -> String {
+```
+`add` is defined with generics, but in this case we study `String`.
+
+First, `s2` has an `&` meaning that wer're referencing the second string to the first string. But wakit -- the type ofo `&s2` is `&String`, not `&str`:
+
+The reason why code compiles is because compiler can *coerce* the `&String` argument into a `&str`. Rust will use *reref coercion*, which here turns `&s2` into `&s2[..]` during `add` method calls.
+
+Second, `add` takes ownership of `self`. So that's why `let s3 = s1 + &s2;` will take ownership of `s1`. 
+
+If we need to concat multiple string, it gets weirder:
+```rust
+let s1 = String::from("tic");
+let s2 = String::from("tac");
+let s3 = String::from("toe");
+
+let s = s1 + "-" + &s2 + "-" + &s3;
+```
+It gets difficult to see what's going on, so we can use a macro and do this instead:
+```rust
+let s = format!("{}-{}-{}", s1, s2, s3);
+```
+`format!` doesn't take ownership of any of its parameters.
+
+### Indexing into Strings
+Accessing individual caharacters in a string by referencing index is valid. BUT in Rust, it will give you error:
+```rust
+// Compile error!
+let s1 = String::from("hello");
+let h = s1[0];
+```
+
+#### Internal Representation
+A `String` is a wrapper over `Vec<u8>`:
+```rust
+let hello = String::from("hola");
+```
+In this case, `len` will be 4, which means that vector storing string "Hola" is 4 bytes long and each of these letters take 1 byte.
+
+But we have here:
+```rust
+let hello = String::from("Здравствуйте");
+```
+Which has `len` 24! Not 12. This is because the encoding in UTF-8, each Unicode scalar value in that string takes 2 bytes of storage. Therefore an index into string's bytes will not always correlate to a valid Unicode scalar value. This is why indexing isn't valid because it will be confusing to decide which value to return.
+
+#### Bytes and Scalar Values and Grapheme Clusters
+UTF-8 another point: three relevant ways to look at strings from Rust's perspective: as bytes, scalar values and grapheme clusters.
+
+The book has an example in Hindi, which I will not copy here.
+
+Another reason not to index into a `String`: it is expected to be constant time operation, but not possible to guarantee with a `String`, because Rust would have to walk through the contents from beginning to index to determine how many valid characters there were.
+
+### Slicing Strings
+Rust asks you to be more specific, so we slice strings instead of indexing. Example:
+```rust
+let hello = "Здравствуйте";
+let s = &hello[0..4];
+```
+Here `s` will be ` &str` that contains the first 4 bytes of that String. Which means `s` will be `Зд`. Since each "character" here in this example is 2 bytes.
+
+`&hello[0..1]` would cause Rust to panic at runtime. Use slies with caution!
+
+### Methods for Iterating Over Strings
+If you need to perform operations on individual Unicode scalar values, use the `chars()` method:
+```rust
+for c in "Зд".chars() { ... }
+```
+
+The `bytes` method returns raw byte:
+```rust
+for b in "Зд".bytes() { ... } // this returns numbers representing bytes
+```
+Remember: valid Unicode scalar values may be made up of more than 1 byte.
+
+Grapheme cluster access is complex and not provided in std. Find things in crates.io instead.
+
+### Strings are not simple
+Programmers have to put more thought into handling UTF-8 data upfront. This trade-off exposes more of the complexity of strings than is apparent in other programming languages, but it prevents you from having to handle errors involving non-ASCII characters later in your developement life cycle.
+
+## 7.3. Storing Keys with Associated Values in Hash Maps
+The type `HashMap<K, V>` sotres a mapping of keys of type `K` to values of type `V`. It does this via a *hash function*.
+
+### Creating a New Hash Map
+You can create a new empty hash map with `new` and add elements with `insert`. 
+
+```rust
+use std::colelctions::HashMap;
+
+let mut scores = HashMap::new();
+
+scores.insert(String::from("Blue"), 10);
+scores.insert(String::from("Yellow"), 50);
+```
+We keep track scores of two teams Blue and Yellow. Among the three we covered, we need to use the `use` keyword. This one is the least often used, so it's not included in the features brought into scope automatically in the prelude. There's no built-in macro to construct them.
+
+Hash maps store data on the heap. Like vectors, hash maps are homogeneous: all of the keys must have the same type, and all of the values must have the same type.
+
+To construct a hashmap, we can use iterators and the `collect `method on a vector of tuples. Example:
+```rust
+use std::collections::HashMap;
+
+let teams = vec![String::from("Blue"), String::from("Yellow")];
+let initial_scores = vec![10, 50];
+
+let mut scores: HashMap<_, _> =
+    teams.into_iter().zip(initial_scores.into_iter()).collect();
+```
+We use the `zip` method to create a vector of tuples where "Blue" is paired with 10 and so on.
+
+The type annotation `HashMap<_, _>` is needed here because it's possible to collect many different structures, and Rust doesn't know which you want unless you specify.
+
+### Hash Maps and Ownership
+For types implementing `Copy` trait, like `i32`, the values are copied into hashmap. For values like `String`, the values will be moved and the hash map will own those values:
+```rust
+use std::collections::HashMap;
+
+let field_name = String::from("Favorite color");
+let field_value = String::from("Blue");
+
+let mut map = HashMap::new();
+map.insert(field_name, field_value);
+// field_name and field_value are invalid at this point, try using them
+// and see compiler error you get
+```
+We can't use variables `field_xxx` after they've been moved into the hash map with the call to `insert`. If we insert references to values into hash map, the values that the references point to must be valid for at least as long the hash map is valid.
+
+### Accessing Values in a Hash Map
+We provide the key to the `get` method:
+```rust
+use std::collections::HashMap;
+
+let mut scores = HashMap::new();
+
+scores.insert(String::from("Blue"), 10);
+scores.insert(String::from("Yellow"), 50);
+
+let team_name = String::from("Blue");
+let score = scores.get(&team_name);
+```
+Here, `score` will have the value that's associated with the Blue team, and the result will be `Some(&10)`. If there is no such value, you will get `None`.
+
+We can iterate over each k/v pair in a hash map in a similar manner as vector, using a `for` loop:
+```rust
+for (key, value) in &scores {
+    println!("{}: {}", key, value);
+}
+```
+bBut this will print in an arbitrary order.
+
+### Updating a Hash Map
+#### Overwriting a Value
+If we insert a key and value, and then insert the same key with a different value, the value associated with that key will be replaced:
+```rust
+scores.insert(String::from("Blue"), 10);
+scores.insert(String::from("Blue"), 50);
+
+println!("{:?}", scores);
+```
+
+#### Only Inserting a Value If the Key has no value
+It's common to check whether a particular key has a value, and if it doesn't, insert value for it. Hash Maps have this API called `entry` that takes the key you want to check as a param, and return the value of `entry` method with an enum called `Entry` (for whether it might or might not exist).
+
+```rust
+scores.insert(String::from("Blue"), 10);
+
+scores.entry(String::from("Yellow")).or_insert(50);
+scores.entry(String::from("Blue")).or_insert(50);
+```
+The `or_insert` method on `Entry` is defined to return a mutable reference to the value of the corresponding `Entry` key if it exists. If it doesn't, it will insert the parameter as the new value for this key, returning a mutable reference to that neew value.
+
+#### Updating a Value Based on the Old Value
+Let's say we are counting occurences of a words. We can increment the value of how many times we've seen that word:
+```rust
+for word in text.split_whitespace() {
+    let count = map.entry(word).or_insert(0);
+    *count += 1;
+}
+```
+Recall: the `or_insert` method returns a mutable reference (&mut V) to the avlue for this key. Here we store that mutable reference in the `count` variable. We must first dereference `count` using the asterisk. The mutable reference goes out of scope at the end of the `for` loop so this is safe.
+
+### Hashing Functions
+`HashMap` uses a "crytopgraphically strong" hash function, which is resistant to Denial of Service (DoS) attacks. Not fast, but secure. For other options, visit the book again which gives more details.
