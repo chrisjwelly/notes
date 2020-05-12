@@ -228,3 +228,266 @@ app:srcCompat="@drawable/empty_dice"
 xmlns:app="http://schemas.android.com/apk/res-auto"
 ```
 
+# Lesson 2: Layouts
+1 and 2 are intro
+
+## 3. View Groups & View Hierarchy
+All visual elements make up a screen are views, all children of the `View` class. Share a lot of properties such as width and height and a background. All can be made interactive
+
+Examples: `TextView` for holding text, `ImageView` and `Button`. Other views: `EditText`, Checkboxes, sliders, and many many more.
+
+Can implement custom views.
+Unit for expressing location is Density Independent Pixel (dp). Abstract. on 160 dpi screen: 1 dp == 1 pixel, on a 480 dpi: 1 dp == 3 pixels. Android devices will handle automatically.
+
+Views that make up a layout are hierarchy of groups. ViewGroups contain other views as a primary job. Commonly a layout has a top-level ViewGroup and any other amount of View or ViewGroup. LinearLayout can be vertical or horizontal. Then you add views to it. Because the about me app has a simple vertical layout.
+
+There is also a `ScrollView` for scrolling. Views in our layout are inflated. When Android needs to inflate this, these hierarchies are traversed and sometimes multiple times. For some apps the view hierarchy can get pretty complex. Android optimises the complexity but it can get slow.
+
+Android offers `ConstraintLayout` for flat view hierarchy and optimised for complex layouts.
+
+Other layouts are still good because of other tradeoffs. Best for arranging small or complex layouts that otherwise require deep nesting if constraint layout is not used.
+
+4 is just creating the project, 5 is creating the activity_main.xml, 6 shows the layout editor basics
+
+## 7. Adding a TextView
+Existense of `dimens.xml` that you should create first before you can use the lightbulb to extract dimension resource
+If you manually create the activity xml, don't forget to call `setContentView(R.layout.activity_main)`
+
+## 8. Styling a TextView
+Some fun things that happened:
+* Added paddings
+* Added layout margins
+* Added a new fontFamily for Roboto (navigate to more fonts, then find Roboto and add it to the project)
+* From the component tree, you can also Refactor -> Extract Style. Then it will be inside `styles.xml`
+
+## 9. Add a TextView, ImageView, and Styling
+Notable things:
+* Drag and drop an image view
+* Add a new yellow star
+* Refactor the id from `imageView` to something else (dont manual change!)
+* Set the content description, creating a resource for it
+* Use the `layout_margin` resource
+
+## 10. Adding a ScrollView
+Scrollview: contain only 1 thing as a child. Usually it's just LinearLayout but in this example it's just a `TextView` inside it.
+
+You can use `lineSpacingMultiplier` to make it more readable.
+
+One nifty trick is the Code -> Reformat Code to make sure that the order of the attributes are consistent.
+
+## 11. Adding an EditText for Text Input
+When you click on Text in the Palette, notice that `TextView` is not underlined while the others are. Undelined Ab means that they are editable. The different Views have different validations, so you should select an appropriate one.
+
+Important attributes:
+* `inputType` where you can select which is the type of input that you want
+* `hint`, which helps the user know what he should do. Delete the text so that you can see the hint
+
+Quiz:
+True - `EditText` extends `TextView`
+False - You must specify an inputType for every `EditText`
+True - The Android System automatically validates input based on the inputType
+False - You should not provide hints because they clutter the input field
+True - Selecting the narrowest inputType helps users avoid errors
+
+## 12. Adding a Done button
+To have a good styling for button:
+`style="@style/Widge.AppCompat.Button.Colored"`, which gives you a `colorAccent` which you can modify in `colors.xml`
+
+Now you need a new TextView to display something.
+
+Visibility:
+* Invisible - hides the view, but still takes up space
+* Gone - takes the view but takes no space
+
+Remember to make Text empty string because we are not showing any text
+
+## 13. ClickHandler
+Code:
+`onCreate`:
+```kotlin
+    ...
+    findViewById<Button>(R.id.done_button).setOnClickListener {
+        // `it` is the done button which is passed as argument
+        addNickname(it)
+    }
+```
+
+New function:
+```kotlin
+    private fun addNickname(view: View) {
+        val editText: EditText = findViewById(R.id.nickname_edit)
+        val nicknameTextView: TextView = findViewById(R.id.nickname_text)
+
+        nicknameTextView.text = editText.text
+        editText.visibility = View.GONE
+        view.visibility = View.GONE
+        nicknameTextView.visibility = View.VISIBLE
+
+        // hide the keyboard.
+        // unexplained so we take it as it is
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+```
+
+## 14. Data Binding
+Under the hood, code uses findViewById to get references to views. Android has to traverse the view hierarchy at runtime to find it which can be difficult and slow down the app.
+
+To fix this we use data binding pattern/technique that allows us to connect a layout and activity at compile time. It creates a helper class called binding class when activity class. Then we can access the views through generated binding class without extra overhead.
+
+## 15. Data Binding: Views
+Enable data binding by doing this in build.gradle in Module:app
+```
+dataBinding {
+  enabled = true
+}
+```
+
+Then inside `activity_main.xml`, instead of having `LinearLayout` as the top level, wrap everything with a `<layout></layout>`.
+
+Also move the namespaces to the `<layout>` from `<LinearLayout>`. So it will look something like this:
+```xml
+<layout xmlns:android="..."
+  xmlns:app="...">
+
+  <LinearLayout <!-- xmlns isn't here anymore
+    >
+  </LinearLayout>
+
+</layout>
+```
+
+Inside `MainActivity.kt`, insert this line to create the binding object: `private lateinit var binding: ActivityMainBinding`
+
+Then make these changes:
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+  super.onCreate(savedInstanceState)
+  // setContentView is no longer necessary
+  // setContentView.... 
+  binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+  // instead of findViewById<Button>(R.id.done_button)
+  binding.doneButton.setOnClickListener { ... }
+}
+
+private fun addNickname(view: View) {
+  // use the apply method instead of binding.nickname, binding.doneButton
+  // multiple times. This is syntactic sugar
+  binding.apply {
+    nickname.text = binding.nicknameEdit.text
+
+    // invalidate so that they get recreated with the correct data
+    invalidateAll()
+    nicknameEdit.visibility = View.GONE
+    doneButton.visibility = View.GONE
+    nicknameText.visibility = View.VISIBLE
+  }
+}
+```
+
+## 16. and 17. Data Binding: Data
+Keep data in a data class. For example, create a `MyName.kt` which contains a `data class MyName()`.
+
+Then create a `<data>` block to identify data as variables to use with the views. Can do as the first child of <layout>:
+```xml
+<data>
+  <variable
+    name="myName"
+    type="com.example.android.aboutme.MyName" />
+</data>
+```
+
+Then to use them, you need to replace text with: `android:text="@={myName.name}"
+
+Don't forget to create instance of myName: `private val myName: MyName = MyName("Christian James Welly")
+
+And in `onCreate`: `binding.myName = myName`
+
+In `addNickname:
+```kotlin
+myName?.nickname = nicknameEdit.text.toString()
+// Invalidate all binding expressins and request a new rebind to refresh
+invalidateAll()
+```
+
+18 is skipped because it's interview with tech leads.
+
+## 19. ConstraintLayout
+Constraint - A connection or alignment to another UI element, to the parent layout, or to an invisible guideline
+
+Advantages:
+* Make it responsive
+* Usually flatter view hierachy
+* Optimized for laying out its views
+* Free-form
+
+20 is creating project. 21 is showing how to create a simple box. A bit too much so better just visit the video again because it involves a lot of IDE-specific features.
+
+## 22. Constraints
+If you don't specify, always appear at (0, 0).
+
+Fixed Constraint: A constraint that is specified using hard-coded number
+Adaptable Constraint: Defines a relationship in relative and weighted terms
+Absolute poisiotning: Positioning is numerical such as the position in x and y coordinates
+Relative positioning: Views are positioned by specifying relationship to other views
+
+Bias: like a bungy cord that keeps the views together. More bias can mean more towards one side or the other.
+
+## 23. Ratios
+Specifying a ratio is helpful when your layout has views that need to keep their shape / aspect ratio even when the screen orientation or dimensions change.
+
+## 24. Chain
+Spread Chain - Elements are spread equally in space
+Packed chain - Elements are packed to use minimum space
+Spread inside chain - Elements are spread to use available space with head and tail attached to the parent
+Packed chain with bias - Elements are packed to use minimum space and are moved on their axis depending on bias
+Weighted chain - Elements are resized to use all available space according to specified weights with head and tail glues to parent
+
+25 is just adding new boxes
+
+## 26. Adding Three Aligned Boxes
+To select multiple of the text boxes: Command + Left Click (on Mac). Then afterwards add chain. From the topmost box, chain it to the adjacent box (in our case it's box two)'s top, and the bottom chain is attached to the adjacent box's bottom. Then all the three boxes' left constraint is attached, and so is all the right constriant.
+
+## 27. Adding Click Listeners
+Code here:
+```kotlin
+
+// common pattern: just create a list and set all the boxes to
+// listen to it
+private fun setListeners() {
+    val clickableViews: List<View> =
+        listOf(box_one_text, box_two_text, box_three_text,
+            box_four_text, box_five_text)
+
+    for (item in clickableViews) {
+        item.setOnClickListener { makeColored(it) }
+    }
+}
+
+// When you click corresponding boxes, it will colour up
+private fun makeColored(view: View) {
+    when (view.id) {
+        // Boxes using Color class colors for background
+        R.id.box_one_text -> view.setBackgroundColor(Color.DKGRAY)
+        R.id.box_two_text -> view.setBackgroundColor(Color.GRAY)
+
+        // Boxes using Android color resources for background
+        R.id.box_three_text -> view.setBackgroundResource(android.R.color.holo_green_light)
+        R.id.box_four_text-> view.setBackgroundResource(android.R.color.holo_green_dark)
+        R.id.box_five_text-> view.setBackgroundResource(android.R.color.holo_green_light)
+
+        else -> view.setBackgroundColor(Color.LTGRAY)
+    }
+}
+
+```
+
+## 28. Baseline Constraint
+Useful when you are aligning two things which have different font. In Android Studio 3.6.3, you need to right click to show baseline (logo has Ab). The video shows that it exists by default but idk why hahahha.
+
+The order of the baselining also matters. Need to look up more on this.
+
+## 29. Add Basline Constraints to more buttons
+In this exercise video, I saw the `ConstraintLayout` being given the id `constraint_layout` and it was referenced in the Kotlin code in the video. However, I couldn't seem to use it..
+
