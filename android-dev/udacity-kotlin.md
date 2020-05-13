@@ -1,5 +1,10 @@
 Using Udacity's "Developing Adroid Apps with Kotlin" [tutorial](https://www.udacity.com/course/ud9012).
 
+This document contains notes on:
+* Lesson 1: Build your First App
+* Lesson 2: Layout
+* Lesson 7: RecyclerView
+
 # Lesson 1: Build your First App
 
 1-8 are skipped as they are just miscellaneous introductions.
@@ -491,3 +496,380 @@ The order of the baselining also matters. Need to look up more on this.
 ## 29. Add Basline Constraints to more buttons
 In this exercise video, I saw the `ConstraintLayout` being given the id `constraint_layout` and it was referenced in the Kotlin code in the video. However, I couldn't seem to use it..
 
+# Lesson 7: RecyclerView
+1 is just intro for-fun video. It seems like this lesson requires applications from the previous lesson
+
+## 2. Introduction
+Advantages of RecyclerView:
+* Efficient display of large list
+* Minimizing refreshes when an item is updated, deleted, or added to the list
+* Reusing views that scroll off screen to display the next item that scrolls on screen
+* Displaying items in a list or a grid
+* Scrolling vertically or horizontally
+* Allowing custom layouts when a list or a grid is not enough for the use case
+
+Some other lists:
+* ListView - 100-ish list is pretty good for this
+* GridView
+* LinearLayout - suitable for very small lists
+
+## 3. Your first RecyclerView (Need to rewatch this)
+Adapter - Converts one interface to work with another.
+
+RecyclerView: Data -> Adapter -> RecyclerView. We don't want to change the way we store or process data just to process it to the screen. Build an adapter so that we can display it in RecyclerView
+
+Concretely Data = Room + ViewModel. In adapter, details such as scrolling doesn't require changes to the room or viewmodel.
+
+Note: Adapter is a general pattern.
+
+Adapter Interface must provide:
+* How many items
+* How to draw an item
+* Create a new view - important! While recyclerview handles the recycling, it does not know what kind of view you will display
+
+RecyclerView runs, it will use adapter to figure how to display data. It starts by asking adapter how many items. It will be create views for the screen. RecyclerView will ask adapter to create new view for the first data item, then once it has the view it will ask adapter to draw the item. It will repeat until no more views can fit the screen.
+
+When recycling, RecyclerView doesnt need to create a view, it will just reuse and ask adapter how to draw it.
+
+To implement recycling and support multiple type of views, RecyclerView doesn't interact with views but instead ViewHolders.
+
+`ViewHolders`:
+* hold views (lol)
+* Store information for RecyclerView which is used to efficiently move views
+* RecylerView's main interface. know last position the items have in the list
+
+Extra info taken care for us, so we don't need to pay much attention to it. ViewHolder is an implementation detail of RecyclerView.
+
+Pay special attention to where the adapter fits!
+
+## 4. Adding a RecyclerView
+Uses code from lesson 6 which at this point I haven't done HAHAHA. Will clone the repo
+
+### Replacing ScrollView to RecyclerView:
+Create the following in fragment_sleep_tracker.xml:
+```xml
+<androidx.recyclerview.widget.RecyclerView 
+  android:id="@+id/sleep_list"
+  ...
+  ...
+  app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+/>
+```
+AppLayoutManager = how to actually position the elements of the list
+`LinearLayoutManager` lays out the items in a list of full-width roles. 
+
+### Creating a new adapter
+In SleepNightAdapter.kt:
+Write this:
+```kotlin
+// What kind of view holder will it be working with? Here it's generic TextItemViewHolder
+class SleepNightAdapter: RecyclerView.Adapter<TextItemViewHolder>() {
+    // data source
+    var data = listOf<SleepNight>()
+
+    override fun getItemCount() = data.size
+
+    override fun onBindViewHolder(holder: TextItemViewHolder, position: Int) {
+        val item = data[position]
+        holder.textView.text = item.sleepQuality.toString()
+    }
+}
+
+```
+RecyclerView won't use `data` directly and it won't even know `SleepNight` exists. Position: position in the list we are supposed to be binding
+
+`onBindViewHolder`: We need to update the views held by this `ViewHolder` to show the item at the position past. So if we are past pos 3, then we have to update `ViewContent` to position 3. Method only calls for items on screen or items just about to be on the screen.
+
+## 5. Display SleepQualityData
+Tell RecyclerView how to create a new `ViewHolder`. In practice, View and ViewHolders are kinda referred to as the same thing.
+
+Whenever RecyclerView needs a new ViewHolder, this method will give it one. Maybe for the first item or when there is more item.
+
+The parameters `ViewGroup` the new view will be added after its bound to an adapter position. Just means that this view will be added to some `ViewGroup` before it gets displayed to the screen. `ViewGroup` holds a few `View`
+
+`ViewType` is used when you have multiple types to be shown in the `RecyclerView`.
+
+We define the method `onCreateViewHolder()`:
+```kotlin
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TextItemViewHolder {
+        // Somewhat important to use the right context. Views know a lot about themselves
+        // Random context like application context you might get views with unexpected sizes
+        val layoutInflater = LayoutInflater.from(parent.context)
+
+        // two additional important arguments. But, you will most likely use this kind of pattern
+        // for every time u define onCreateViewHolder. Slowly learn!
+        val view = layoutInflater.inflate(R.layout.text_item_view, parent, false) as TextView
+
+        // Wrap our view in a Holder and return object
+        return TextItemViewHolder(view)
+    }
+```
+
+We also create a custom setter to `data` that calls `notifyDataSetChanged()`:
+
+```kotlin
+// use var
+var data = listOf<SleepNight>()
+    // Letting recycler view know when data changes
+    // custom setter to the data variable. All it has to do is update field
+    // which is set value in the setter
+
+    // Might be overkill but we keep it for now
+    set(value) {
+        field = value
+        // tells recyclerview that the entire data might have changed
+        notifyDataSetChanged()
+    }
+
+```
+
+Now we visit the `SleepTrackerFragment` to initialise our `SleepNightAdapter`
+
+```kotlin
+val adapter = SleepNightAdapter()
+binding.sleepList.adapter = adapter
+
+// Actually tell adapter what data it should be adapting
+// our view model has list of sleepnight available already, so we can add an observer.
+// by using ViewModel LifecycleOwner, we can make sure this observer is around
+// when RecyclerView is still onscreen only. In the observer whenever we get a non-null
+// value, we just assign it to adapter data
+sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
+    it?.let {
+        adapter.data = it
+    }
+})
+```
+
+Debugging tips:
+If you app compiles but it doesn't work:
+* Make sure you've added at least one night of sleep
+* Do you call `notifyDataSetChanged()` in `SleepNightAdapter`?
+* Try setting breakpoint and ensure it is getting called
+* Did you register an observer on `sleepTrackerViewModel.nights` in `SleepTrackerFragment`?
+* Did you set the adapter in `SleepTrackerFragment` using `binding.sleepList.adapter = adapter`?
+* Does `data` in `SleepNightAdapter` hold a non-empty list?
+* Try setting a breakpoint in the setter and `getItemCount()`?
+
+## 6. Recycling ViewHolders
+On `onBindViewHolder`, we can show low sleep quality in red:
+```kotlin
+if (item.sleepQuality <= 1) {
+  holder.textView.setTextColor(Color.RED)
+}
+```
+
+But once you scroll, you will notice the wrong things are red, regardless of their sleepQuality value. What you want to do is to add an `else` block to reset color:
+```kotlin
+if (item.sleepQuality <= 1) {
+  holder.textView.setTextColor(Color.RED)
+} else {
+  holder.textView.setTextColor(Color.BLACK)
+}
+```
+
+## 7. More about ViewHolder
+If you look at the `Util.kt`, then `TextItemViewHolder` seems to only be calling `RecyclerView.ViewHolder(view)`. Why can't we just pass in `view` which is `TextView`?
+
+In essence, wrapping it in a `ViewHolder `is not a useless thing to do! A `ViewHolder` describes an item view and metadata about its place within the `RecyclerView`. One of the methods that is useful is `getLayoutPosition` or `getItemId()`. Your ViewHolder can tell the `RecyclerView` what the Id is.
+
+Important thing: `ViewHolder` is a key part of how a `RecyclerView` actually draws, animates, and scrolls your list.
+
+## 8. Displaying SleepQualityList
+So first you gotta create a new XML file `list_item_sleep_night` and add views to the `ConstraintLayout` to build the design as seen.
+
+Then, in `SleepNightAdapter`, create a `ViewHolder` class that extends `RecyclerView.ViewHolder`, like so:
+
+```kotlin
+class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+  val sleepLength: TextView = itemView.findViewById(R.id.sleep_length)
+  val quality: TextView = itemView.findViewById(R.id.quality_string)
+  val qualityImage: TextView = itemView.findViewById(R.id.quality_image)
+}
+```
+
+Then change the declaration of `SleepNightAdapter` to have its type parameter to be `SleepNightAdapter.ViewHolder`. I think we must keep the `SleepNightAdapter` qualifier there because we are currently "outside" its scope.
+
+Make sure all the return type and parameters are updated to `SleepNightAdapter.ViewHolder` too.
+
+Update onBindViewHolder:
+Change `onBindViewHolder` to take `holder: ViewHolder` as parameter and update the views in `VieHolder` to display resources instead of colors:
+```kotlin
+override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    val item = data[position]
+    val res = holder.itemView.context.resources
+
+    holder.sleepLength.text = convertDurationToFormatted(item.startTimeMilli, item.endTimeMilli, res)
+    holder.quality.text = convertNumericQualityToString(item.sleepQuality, res)
+
+    holder.qualityImage.setImageResource(when (item.sleepQuality) {
+        0 -> R.drawable.ic_sleep_0
+        1 -> R.drawable.ic_sleep_1
+        2 -> R.drawable.ic_sleep_2
+        3 -> R.drawable.ic_sleep_3
+        4 -> R.drawable.ic_sleep_4
+        5 -> R.drawable.ic_sleep_5
+        else -> R.drawable.ic_sleep_active
+    })
+}
+```
+
+## 9. Refactor onBindViewHolder
+Our `onBindViewHolder` is currently doing all the binding for this holder. This might not be flexible if you have many different `ViewHolder`. So what you want to do is to refactor all the binding to a `bind` function that is a method inside the `ViewHolder` class. This way, `onBindViewHolder` can easily call `holder.bind(item)`.
+
+Some nifty tricks: Android Studio can help you refactor and extract a piece of code out as a funfction. You can also press *Option-enter* and transform the `holder` with *Convert parameter to receiver*
+
+## 10. Refactor onCreateViewHolder
+1. Encalpsulate logic for creating the `ViewHolder`, by refactoring it into a `public` method called `from`.
+2. Move the `from` code into `companion object` by clicking option-enter on the `from` method, and move it to the `ViewHolder` class.
+3. Change the `ViewHolder` class declaration to be `private constructor`:
+```kotlin
+class ViewHolder private constructor(itemView: View)
+```
+4. Change return statement in onBindViewHodler to:
+```kotlin
+return ViewHolder.from(parent)
+```
+
+Your refactored `ViewHolder` class might have this companion object:
+```kotlin
+companion object {
+  fun from(parent: ViewGroup): ViewHolder {
+    val layoutInflater = LayoutInflater.from(parent.context)
+    val view = layoutInflater.inflate(R.layout.list_item_sleep_night, parent, false)
+
+    return ViewHolder(view)
+  }
+}
+```
+
+## 11. Improving Data Refresh
+Here, a quick summary of everything was given. A problem we have, `notifySetDataSetChanged()` is being used for updates. This:
+* Re-draws **every** views
+* Very expensive
+
+Can show flickers, or hiccup while scrolling. It's gonna hang and catches up with a big jump and stuff. To fix this, we need to tell `RecyclerView` what changed. It has a rich API for updating elements.
+
+`RecyclerView` updates:
+* Add
+* Remove
+* Move
+* Update
+
+This is tedious, and hard to get right if you aren't careful. `RecyclerView` has a class called `DiffUtil`: helper for `RecyclerView` adapters that calculates changes in lists and minimizes modifications.
+
+It will take an old and new list, use Myers diff to find the minimum number of changes to get it to a new list.
+
+`DiffUtil` benefits:
+* Only redraw changed Items
+* Animate by default
+* Efficient
+
+## 12. Refresh Data with `DiffUtil`
+At the bottom of `SleepNightAdapter.kt`, create a new class `SleepNightDiffCallback`:
+```kotlin
+// Type of parameters omitted for simplicity
+class SleepNightDiffCallback : DiffUtil.ItemCallback<SleepNight>() {
+  override fun areItemsTheSame(oldItem, newItem): Boolean {
+    // Here, you are usually just comparing ID
+    return oldItem.nightId == newItem.nightId
+  }
+
+  override fun areContentsTheSame(oldItem, newItem): Boolean) {
+    // check if they are the same item
+    // Both items are type SleepNight and they would have some
+    // equality method defined automatically because they
+    // are a data class (i think)
+    return oldItem == newItem
+  }
+}
+```
+
+Now update what to extend to with:
+```kotlin
+class SleepNightAdapter : ListAdapter<SleepNight, SlepeNighAdapter.ViewHolder>(SleepNightDiffCallback()) {
+```
+Import it with `androidx....`
+
+We can then remove code for `val data` and `getItemCount`. Replace `data[position]` with a call to `getItem()`
+
+In `SleepTrackerFragment` `nights` observer, replace `adapter.data` asisngment with a call like this:
+```kotlin
+...
+it?.let {
+  adapter.submitList(it)
+}
+...
+```
+
+## 13. Add DataBinding to the Adapter
+First, we want to wrap the `ConstraintLayout` in `layout` tag. Use the intention menu option-enter/alt-enter to "Convert to data binding layout". You will see `layout` being automatically defined and a <data>` tag is defined.
+
+Now we can define a new variable called `sleep`, and rebuild the app:
+```xml
+<data>
+  <variable
+    name="sleep"
+    type-".....SleepNight" />
+</data>
+```
+
+In `SleepNightAdapter.ViewHolder`:
+In the `from()` function, use `ListItemNightSleepNightBinding.inflate to create the binding object:
+```kotlin
+fn from(parent: ViewGroup): ViewHolder {
+  val layoutInflater = LayoutInflater.from(parent.context)
+  val binding = ListItemSleepNightBinding.inflate(layoutInflater, parent, false)
+  return ViewHolder(binding)
+}
+```
+You can alt-enter at this point to change the type reference of `ViewHolder`.
+
+Now gotta refactor and rename ViewHolder class' constructor parameter to take a `ListItemSleepNightBinding` paramater aclled `binding.root`:
+```kotlin
+class ViewHolder private constructor(val binding: ListItemSleepNightbinding): RecyclerView.ViewHolder(binding.root) {
+```
+IMPORTANT: **val** binding should be used here to make it a property that you can access. (?)
+
+Then remove all references to `findViewById`, to just access the binding object fields directly.
+
+Since these things are cached inside the binding object, you can just refactor inline and remove the saved reference. 
+
+By this point it should work and you can re-build the app.
+
+## 14. Add Binding Adapters
+You'll create binding adapters, and move data binding logic to XML
+
+Add three binding adapters in the form of extension function, one for each view in `list_item_sleep_night` in `BindingUtils`:
+Example:
+```xml
+// The binding adapter you pass in a custom name yourself
+@BindingAdapter("sleepImage")
+fun ImageView.setSleepImage(item: SleepNight) {
+    setImageResource(when (item.sleepQuality) {
+        0 -> R.drawable.ic_sleep_0
+        1 -> R.drawable.ic_sleep_1
+        2 -> R.drawable.ic_sleep_2
+        3 -> R.drawable.ic_sleep_3
+        4 -> R.drawable.ic_sleep_4
+        5 -> R.drawable.ic_sleep_5
+        else -> R.drawable.ic_sleep_active
+    })
+}
+
+@BindingAdapter("sleepDurationFormatted")
+fun TextView.setSleepDurationFormatted(item: SleepNight?) {
+    item?.let {
+        text = convertDurationToFormatted(item.startTimeMilli, item.endTimeMilli, context.resources)
+    }
+}
+```
+
+
+Then, replace the code in `SleepNighAdapter.ViewHolder.bind` with a single binding to the SleepNight item:
+```kotlin
+binding.sleep = item
+binding.executePendingBindings() // I assume this method will trigger all the 3 newly created adapter
+```
+
+In `list_item_sleep_night`, add attributes to bind the views to the corresponding adapters. E.g. for `ImageView`: add `app:sleepImage="@{sleep}"
