@@ -75,6 +75,17 @@ java.lang.IllegalStateException: Expected BEGIN_ARRAY but was BEGIN_OBJECT at li
 ## Retrofit with Kotlin
 I managed to make Retrofit work with Kotlin with the help of this [article](https://dev.to/paulodhiambo/kotlin-and-retrofit-network-calls-2353). However a note for that article is that they requires some API key for their API server, so I opted to use the same API server as the one in the [Medium article](https://medium.com/@prakash_pun/retrofit-a-simple-android-tutorial-48437e4e5a23) (that is in Java).
 
+You might face this error: `Invoke-customs are only supported starting with android 0 --min-api 26`. To fix this, add this to the app/build.gradle:
+```
+android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+```
+Courtesy of this [Stack Overflow post](https://stackoverflow.com/questions/49891730/invoke-customs-are-only-supported-starting-with-android-0-min-api-26)
+
 Also the article didn't seem to mention the need to insert this to `AndroidManifest.xml`: `<uses-permission android:name="android.permission.INTERNET" />`.
 
 I also configured setting images to the layout by using Picasso using the same medium article. An implication of this is that in the `bind` method in their `MoviesViewHolder` have to be modified to pass in a `Context`. The argument for this function should be `this@MainActivity`.
