@@ -3496,3 +3496,273 @@ where
 }
 ```
 There is extra param here, which displays it before doing comparisons, which is why `Display` trait bound is necessary. Lifetimes are a type of generic, the declarations of the lifetime parameter `'a` and the generic type parameter `T` go in the same list inside angle brackets.
+
+# 10. Writing Automated Tests
+If for example we have `add_two` function to add 2 to whatever number is passed to it. Rust's type checking and borrow checking will ensure that we aren't passing a `String` value or an invalid reference to this function. But Rust *cannot* check that this funciton will do precisely what we intend. Maybe it's adding 10? This is why we should test!
+
+## 10.1 How to Write Tests
+The bodies of test functions typically perform these three actions:
+1. Set up any needed data or state
+2. Run the code you want to test
+3. Assert the results are what you expect
+
+### The Anatomy of a Test Function
+A test in Rust is a function that's annotated with the `test` attribute. Attributes are metadata about pieces of Rust code. Example: `derive` attribute. When you run your tests with the `cargo test` command, Rust builds a test runner binary that runs the functions annotated with the `test` attribute and reports on whether each test funciton passes or fails.
+
+When we build a new library project with Cargo, a test module with a test function in it is automatically generated for us. It helps to start write tests. You can add as many additional test functions!
+
+Creating a new library project called `adder`: `cargo new adder --lib`
+
+Note that the `#[test]` annotation before the `fn` line indicates that this is a test function so the runner will treat it as such. 
+
+We can have non-test functions to help set up common scenarios or perform common operations.
+
+Function body uses the `assert_eq! macro to assert that 2 + 2 equals 4. This assertion serves as eg of the format of a typical test.
+
+The `cargo test` command runs all tests in our project.
+
+Because we don't have any tests we've marked as ignored, the summary shows `0 ignored`. We also haven't filtered, so it shows `0 filtered out`.
+
+The `0 measured` statistic is for benchmark tests that measure performance. But it is only available in nightly Rust.
+
+The next part of the test output, which starts with `Doc-tests adder` is for the results of any documentation tests. Rist can compile any code examples that appear in our API documentation. This helps our docs and our code in sync.
+
+Tests fail when something in the test function panics. Each test is run in a new thread, and when the main thread sees that a test thread has died, it is marked as failed. 
+
+After failing the test suite, two new sections appear between the individual results and the summary: the first section displays the detailed reason for each test failure. The next section just details which tests are failing.
+
+### Checking Results with the `assert!` Macro
+`assert!` marco is useful when you want to ensure that some condition in a test evaluates to `tru`. We give it an argument that returns a boolean. If `true`, nothing happens and test passes, else `false` it will call the `panic!` macro.
+
+Let's write a `Rectangle` and `can_hold` method to try out the `assert!` macro.
+
+The `can_hold` method returns a Boolean, which makes it a perfect use case for the `assert!` macro. 
+
+We can write a test for it:
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn larger_can_hold_smaller() {
+        let larger = Rectangle {
+            width: 8,
+            height: 7,
+        };
+        let smaller = Rectangle {
+            width: 5,
+            height: 1,
+        };
+
+        assert!(larger.can_hold(&smaller));
+    }
+}
+```
+
+Because the `tests` module is an inner module, we need to bring the code under test in the outer module into the scope of the inner module. Use a glob here so anything we define in the outer module is available to `tests` module: `use super::*;`
+
+Now let's try asserting that a smaller rectangle cannot hold a larger one. Refer to example in the book.
+
+We negate the boolean returned to assert something that is supposed to give us `false`. Now we see what happens to our test results when we introduce a bug in our code!
+
+E.g. replace greater than sign with a less than sign
+Our tests will catch this bug when we run `cargo test`.
+
+### Testing Equality with the `assert_eq!` and `assert_ne!` Macros
+You could technically use `assert!` with `==`, but it's a comon pattern that we just have a pair of macros for it: `assert_eq!` and `assert_ne!`. What's good is that they print the two values if the assertion fails.
+
+We have seen an example of `assert_eq!` in the beginning. Now try adding a bug to the code (e.g. adding 3 in the function). Not only the macro will catch the bug, it will also tell us why the two values are different.
+
+In Rust, it doesn't matter which order we specify the value. They are just called `left` and `right` instead of `expected` and `equal`.
+
+Whereas for `assert_ne!`, it is most useful if you are not sure what the values *will* be, but you know what value it definitely *won't* be.
+
+Since we print the arguments using debug formatting if a test fails, the values being compared must implement the `PartialEq` and `Debug` traits. Usually it's as straight forward as adding `#[derive(PartialEq, Debug)]`.
+
+### Adding Custom Failure Messages
+You can add a custom message printed with the failure message as optional arguments to the various `assert` macros.
+
+Any optional arguments are passed along to the `format!` macro, so you can format string that contains `{}` placeholders and values to go in those placeholders.
+
+You might want to write a test like this to make it more descriptive if it fails (because it prints out the value):
+```rust
+#[test]
+fn greeting_contains_name() {
+    let result = greeting("Carol");
+    assert!(
+        result.contains("Carol"),
+        "Greeting did not contain name, value was `{}`",
+        result
+    );
+}
+```
+
+### Checking for Panics with `should_panic`
+We add another attribute, `should_panic` to our test function. It makes a test pass if the code inside the function panics; the test will fail if it doesn't panic.
+
+So you could write a test like this:
+```rust
+#[test]
+#[should_panic]
+fn being_at_the_disco() {
+    panic!("At the Disco!");
+}
+```
+
+We place the `#[should_panic]` attribute after the `#[test]` attribute and before the test function it applies to.  (but quick testing seems to show that it's ok for it not to be right after)
+
+If test does not panic as expected, it's not as descriptive as you might have. So you can add an `expected` parameter to the `should_panic` attribute.
+
+So you can write a test like this (this should fail):
+```rust
+#[test]
+#[should_panic(expected = "At the Disco!")]
+fn being_at_the_disco() {
+    panic!("At the Club!");
+}
+```
+This code will still panic, but it is not passing because the panic is due to another reason.
+
+### Using `Result<T, E>` in Tests
+We can rewrite tests like this to use `Result<T, E>` and return an `Err`:
+```rust
+#[test]
+fn it_works() -> Result<(), String> {
+    if 2 + 2 == 4 {
+        Ok(())
+    } else {
+        Err(String::from("two plus two does not equal four"))
+    }
+}
+```
+
+Rather than calling `assert_eq!` macro, we return `Ok(())` when test passes and an `Err` with a `String` inside if it fails.
+
+Writing tests so they return a `Result<T, E>` enables you to use the question mark operator in body of tests, which can be convenient. 
+
+However, you can't use the `#[should_panic]` annotation on tests that use `Result<T, E>`. Instead you should return `Err` value directly when the test fails.
+
+## 10.2 Controlling How Tests Are Run
+`cargo test` will compile your code in test mode and runs the resulting test binary. You can specify command line options to change behaviour. E.g. default of the binary produced is to run all tests in parallel and capture output generated during the run, preventing the output from being displayed and making it easier to read output related to the test results.
+
+Some command line options go to `cargo test` and some go to the resulting test binary. To separate these types of arguments, you list arguments going to `cargo test` followed by separator `--` and the ones that go to the test binary.
+
+Running `cargo test --help` displays options you can use with `cargo test`. Running `cargo test -- --help` displays the options you can use after the separator `--`.
+
+### Running Tests in Parallel or Consecutively
+By default they run in parallel using threads, so it will finish running faster so you can get feedback quicker. Make sure your tests don't depend on each other or on any shared state, including a shread environment. For example, current working directory or environment variables.
+
+Say each of your tests run some code that creates a file on disk named *test-output.txt* and writes some data to that file. If this file is changed, the second test using it might behave differently and fail. A solution: each test writes to a different file; another solutioN: run tests one at a time.
+
+You can do it so:
+`cargo test -- --test-threads=1`
+
+Here we set number of test threads to `1`, telling the program not to use any parallelism. Running the tests using one thread will take longer, but won't interfere with each other if they share state.
+
+### Showing Function Output
+By default, if the test passes, we won't see the stdout. We'll see only line that indicates the test passed.
+
+If we want to see printed values for passing tests as well, we can tell Rust to also show the output of successful tests at the end like this: `cargo test -- --show-output`
+
+### Running a Subset of Tests by Name
+If you're working on code in particular area, you might want to run only the tests pertaining to that code. You can choose which tests to run by passing `cargo test` the name or names of the test(s) you want to run as an argument.
+
+#### Running Single Tests
+Say we have a test called `one_hundred`, we can simply run `cargo test one_hundred` to run *just* that test.
+
+#### Filtering to Run Multiple Tests
+Say now we have two tests `add_two` and `three_add`. To run these things we can do: `cargo test add` because it finds all tests whose names contain `add`.
+
+### Ignoring Some Tests Unless Specifically Requested
+You can annotate `ignore` to exclude tests from the `cargo test`.
+
+## 10.3. Test Organization
+Rust community thinks about tests in terms of two main categories: *unit tests* and *integration tests*.
+
+Unit tests are small and more focused, testing one module in isolation at a time and can test private interfaces.
+
+Integration tests are entirely external to your library and use your code in the same way any other external code would, using only the public interface and potentially exercising multiple modules per test.
+
+### Unit Tests
+It tests each unit of code in isolation from the rest of the code to quickly pinpoint where code is and isn't working as expected.
+
+Put in *src* directory in each file with the code that they're testng. Create a module named `tests` in each file to contain the test functions, and annotate with `cfg(test)`.
+
+#### The Tests Module and `#[cfg(test)]`
+The `#[cfg(test)]` annotation on the tests module tells Rust to compile and run the test code when you run `cargo test` not `cargo build`. 
+
+This will save compile time when you only want to build the library. Integration tests go in a different directory because they don't need this annotation. However because unit tests go in the same files as the code, you'll use `#[cfg(test)]` to specify that they shouldn't be included in the compiled result.
+
+When we create the project with the library, the test code is automatically generated test module. The attribute `cfg` stands for configuration and tells Rust that the following item should only be included given a certain configuration option.
+
+Here the option is `test`. By using `cfg`, Cargo compiles our test code if we actively run the tests with `cargo test`, inclusive of helper functions in the module.
+
+#### Testing Private Functions
+Rust's privacy rules do allow testing of private functions.
+
+```rust
+fn internal_adder(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn internal() {
+        assert_eq!(4, internal_adder(2, 2));
+    }
+}
+```
+Note that the function is not marked as `pub` but because tests are just Rust code and the `tests` module is just another module, you can bring the private funciton into the test scope.
+
+### Integration Tests
+Units of code that work correctly on their own could have problems when integrated, so test coverage of the integrated code is important as well. You first need a *tests* directory.
+
+#### The *tests* Directory
+Make a *tests* directory, and create a new filed named *tests/integration_test.rs*
+
+We don't need to annotate it with `#[cfg(test)]`. It treats the `tests` directory specially and compiles files in this directory only when we run `cargo test`.
+
+It will run three things: unit, integration and doc tests.
+
+If we add more things in the *tests* directory, there will be more integration test sections. 
+
+If you just want to run particular integration test funciton, you can just specify the test function's name. To run all the tests in a particular integration test file, use the `--test` argument of `cargo test` followed by the name of the file: `cargo test --test integration_test` in our case.
+
+#### Submodules in Integration Tests
+Treating each integration test file as its own crate is useful to create separate scopes that are more like the way end users will use your crate This means files in the *tests* directory don't share the same behaviour as files in *src* do.
+
+The different behaviour of files in *tests* directory is most noticeable when you have helper functions that would be useful in multiple integration test files. 
+
+E.g. if we create *tests/common.rs*, and place function `setup`, we can add some code to `setup` that we want to call from multiple test functions in multiple test files.
+
+When we run the tests again, we'll see a new section in the test output for the *common.rs* file, even though this file has no test nor did we call `setup`.
+
+Having `common` appear is not something we want. To avoid having `common` appear, we create: *tests/common/mod.rs*. This naming convention is something Rust understands. It tells Rust not to treat the module as an integration test file. 
+
+Files in subdirectories of the *tests* directory don't get compiled as separate crates or have sections in the test output.
+
+We can use contents of `tests/common/mod.rs` from any integration test files as a module. Example:
+```rust
+use adder;
+
+mod common;
+
+#[test]
+fn it_adds_two() {
+    common::setup();
+    assert_eq!(4, adder::add_two(2));
+}
+```
+
+#### Integration Tests for Binary Crates
+If our project is a binary crate that only contains *src/main.rs* file and no *src/lib.rs*, we can't create integration tests in the *tests* directory and bring functions defined in the *src/main.rs* file into scope with a *use* statement. 
+
+**Only library crates expose functions that other crates can use; binary crates are meant to be run on their own**
+
+Rust projects that provide a binary have a straightforward *src/main.rs* file that calls logic that lives in the *src/lib.rs* file. Using that structure, integration tests *can* test the library crate with `use` to make the important functionality available. If the important functionality works, the small amount of code in the *src/main.rs* file will work as well, and that small amount of code doesn't need to be tested.
+
+I DONT UNDERSTAND THIS LITTLE SECTION
