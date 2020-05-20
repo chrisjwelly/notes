@@ -342,6 +342,7 @@ export default SectionListBasics = () => {
 With reference to this [article](https://blog.usejournal.com/understanding-react-native-component-lifecycle-api-d78e06870c6d)
 
 ## The Component Lifecycle API
+**NOTE: `componentWillMount` SEEMS TO BE DEPRECATED**. See [here](https://reactjs.org/blog/2018/03/27/update-on-async-rendering.html)
 ```
 constructor() -> componentWillMount() -> render() -> componentDidMount() -.
                                             ^                             |

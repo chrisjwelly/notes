@@ -27,3 +27,17 @@ This 30-minute [video](https://www.youtube.com/watch?v=FznGNZeU_Xc) on building 
 The [react-native-ratings](https://github.com/Monte9/react-native-ratings) provide some support, but it didn't work well with `ImageBackground`, because the rating stars are inside a recatangular white background.
 
 The [react-native-star-rating](https://github.com/djchie/react-native-star-rating) package provides better support in that aspect. But I have yet to find out how I can fill the background of an empty star.
+
+# Adding Text Shadow for white text on ImageBackground
+I can't really find a simple way of adding text outline (most StackOverflow answers are about making rectangular borders by using `borderWidth` and `borderColor`). However, the closest thing is to add text shadow as advised [here](https://rants.broonix.ca/font-shadows-in-react-native).
+
+Essentially, use this style:
+```
+{
+color: '#fff,
+textShadowOffset: { width: 2, height: 2 },
+textShadowRadius: 1,
+textShadowColor: '#000',
+}
+```
+
