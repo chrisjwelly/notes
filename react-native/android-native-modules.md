@@ -1,9 +1,10 @@
-Sometimes you may need to expose the native Android API to the JavaScript and this can be done via React Native modules. You can refer to the full thing [here](https://reactnative.dev/docs/native-modules-android). When I did it, there was no need to run the Native Modules Setup. Code snippets will be in Kotlin.
+Sometimes you may need to expose the native Android API to the JavaScript and this can be done via React Native modules. You can refer to the full thing [here](https://reactnative.dev/docs/native-modules-android). When I did it, there was no need to run the Native Modules Setup. Code snippets will be in Kotlin. However, there will be parts of the code that was auto-converted code by Android Studio from Java to Kotlin. Syntax may be weird.
 
 # Finish Activity
 Use case: calling `finish` on the activity upon pressing a "back" button in the React Native UI.
 
 ## Code
+This code is with reference to this [Stack Overflow post](https://stackoverflow.com/a/58509781/11284745)
 FinishModule.kt:
 ```kotlin
 import com.facebook.react.bridge.ReactApplicationContext
@@ -52,7 +53,7 @@ class CustomPackage: ReactPackage {
     }
 }
 ```
-Take note for the above, when you copy the Java code from the docs you may encounter a problem with `ViewManager`, saying that "2 type arguments expected for class ViewManager<T: ...., C: ...>". This [Stack Overflow post](https://stackoverflow.com/questions/48051190/kotlin-one-type-argument-expected-for-class-for-abstract-generic-view-holder) might help.
+Take note for the above, when you copy the Java code from the docs you may encounter a problem with `ViewManager`, saying that "2 type arguments expected for class `ViewManager<T: ...., C: ...>`". This [Stack Overflow post](https://stackoverflow.com/questions/48051190/kotlin-one-type-argument-expected-for-class-for-abstract-generic-view-holder) might help.
 
 What I did was to change it to `ViewManage<*, *>`. It seems hacky, and I have yet to study what it does. But I was told it was okay.
 
