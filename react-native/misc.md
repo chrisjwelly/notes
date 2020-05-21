@@ -41,3 +41,25 @@ textShadowColor: '#000',
 }
 ```
 
+# Passing data from Android to React Native
+In `MyReactNativeActivity`'s `onCreate()` method:
+```kotlin
+val movieId = intent.getStringExtra("movieId")
+var initialProps = Bundle()
+initialProps.putString("key", movieId) // here, "key" can be any custom key you'd like. e.g. "movieId" works too
+
+// The string here (e.g. "MyReactNativeApp") has to match
+// the string in AppRegistry.registerComponent() in index.js
+mReactRootView!!.startReactApplication(mReactInstanceManager, "PopularMovies", initialProps)
+setContentView(mReactRootView)
+```
+The key here lies in passing the `initialProps` to the third parameter. How you pass data from a previous Activity can be done by a simple `intent.putExtra` from the previous Activity:
+```kotlin
+// val intent = Intent(context, ButtonActivity::class.java)
+val intent = Intent(context, MyReactActivity::class.java)
+intent.putExtra("movieId", currentMovie?.id.toString())
+
+itemView.context.startActivity(intent)
+```
+
+Then, inside the corresponding React Native JS code, you can access it via `this.props.key`
