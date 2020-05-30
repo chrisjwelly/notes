@@ -93,3 +93,76 @@ import Finish from './native_modules/Finish'
 // Call it like this
 Finish.finishActivity();
 ```
+
+# Multiple Modules
+Creating Multiple modules is as simple as creating a new Kotlin file and in your package kotlin file, do this:
+```kotlin
+override fun createNativeModules(
+  reactContext: ReactApplicationContext
+): List<NativeModule> {
+  val modules: MutableList<NativeModule> = ArrayList()
+  modules.addAll(
+    listOf(FirstModule(reactContext),
+      SecondModule(reactContext),
+      ThirdModule(reactContext))
+  )
+  return modules
+}
+```
+
+Important note: Make sure that the `getName()` method in the respective module are unique:
+FirstModule.kt:
+```kotlin
+override fun getName(): String {
+  return "First"
+}
+```
+
+SecondModule.kt:
+```kotlin
+override fun getName(): String {
+  return "Second" // Different
+}
+```
+
+Then you can import it in your JS code as per normal.
+
+# Returning a value using the native module methods
+By default, methods annotated with `@ReactMethod` are void/unit functions. They must not return. So if you want to obtain a value, you have to do a little bit more. You should refer to callbacks/promises in the [docs](https://reactnative.dev/docs/native-modules-android.html#callbacks). This [video](https://www.youtube.com/watch?v=u8auHumLWK4) might also help.
+
+I personally only used Promises and this is how I did it. Suppose from the JS code, you want to call a native method that checks whether a number is even or odd. In the native code, do this:
+FirstModule.kt:
+```kotlin
+@ReactMethod
+fun isEven(n: Int, promise: Promise) {
+  try {
+    val isEven = n % 2 == 0
+
+    promise.resolve(isEven)
+  } catch (e: Exception) {
+    promise.reject("An error occurred", e)
+  }
+}
+```
+Notice in the code above, you are passing `Promise` as a parameter. Don't be confused in the code below when you don't see it!
+
+Then in the JS code, you have to use `async`/`await` syntax.
+```js
+nativeIsEven = async (n) => {
+  try {
+    // one argument instead of two
+    return await First.isEven(n);
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+componentDidMount = async () => {
+  ...
+  let isEven = await this.nativeIsEven(10);
+  ...
+}
+```
+In both functions, notice the usage of `async` and `await`. So all in all, whoever is calling the function needs to be annotated with `async`, and the piece of code that actually calls another `async` function must use `await` for us to expect the result.
+
+Also notice the call to the native module doesn't even have `Promise` passed as an argument. Don't panik, this is okay. I don't know why yet, but all I know is that this is ok.
