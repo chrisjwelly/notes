@@ -59,3 +59,44 @@ References:
 * [For the solution of retrieving system resources](https://stackoverflow.com/questions/4253328/getstring-outside-of-a-context-or-activity/8765766)
 * [For the solution of self-defined strings](https://stackoverflow.com/questions/4391720/how-can-i-get-a-resource-content-from-a-static-context/4391811#4391811). An answer there has a nicely defined `Strings` class to help with any additional arguments.
 
+## Handling Orientation Changes
+The official [docs](https://developer.android.com/guide/topics/resources/runtime-changes). And here is a pretty good [article](https://medium.com/hootsuite-engineering/handling-orientation-changes-on-android-41a6b62cb43f) about it.
+
+What happens when a user rotates a screen is that the Activity or Fragments will get destroyed, and later recreates them. However, there is an opportunity to restore your state when recreating them.
+
+The idea behind handling screen orientation changes relies on the `savedInstanceState` `Bundle`. You might also want to use the `onSaveInstanceState` method. 
+
+Basically, this is the method that a parameter to the `onCreate` method, but when you fire off an Activity afresh, this will be a `null`. However, when you are recreating the Activity (because you are recovering from screen rotation), this will not be a `null` value. We can take advantage of that.
+
+One way is that you can make a network call only if this `Bundle` is not `null`. Together with a database, you don't even need to save anything into this `Bundle`. However suppose you are saving certain lightweight things and not using a local storage, this `Bundle` is where you can save things to recover when recreating the Activity.
+
+Firstly, override the `onSaveInstanceState` method:
+
+```kotlin
+override fun onSaveInstanceState(outState: Bundle) {
+  // call the super method for the default stuff
+  super.onSaveInstanceState(outState)
+
+  outState.putInt(KEY, value)
+}
+```
+Naturally, we need to define a `KEY` somewhere as a member variable. We also need to have a `value`, variable, whatever it is.
+
+So in the `onCreate` method you can have something like this:
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+  super.onCreate(savedInstanceState)
+
+  if (savedInstanceState != null) {
+    // assuming you already have a variable for it
+    value = savedInstanceState.getInt(KEY)
+    // you may need to do some type casting here if you are passing serializable
+    // and expecting an ArrayList
+  } else {
+    // do something
+  }
+}
+```
+
+However, take note that this `Bundle` has a limit, and according to my mentor (who got it from some internet sources), it's only around 500Kb. So if you are saving a lot of things like a list of items, it may cause app crashes. A solution to this is to use a database for storage, and access database to recover a state (and you know you are recovering based on whether it is `null` or not).
