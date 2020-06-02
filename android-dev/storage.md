@@ -97,8 +97,37 @@ val future = Executors.newSingleThreadExecutor().submit(callable)
 future.get() // this is the result
 ```
 Credits to this [Stack Overflow post](https://stackoverflow.com/a/59768908/11284745)
+Take note however: `future.get()` blocks the thread.
 
-An alternative is `AsyncTask`, but I didn't study this enough to talk about it yet hahaha.
+If you are doing something like React Native integration which can only run on one thread, this can be problematic. What you can do is to create your own listener:
+```kotlin
+interface MyListener {
+  fun onSuccess(something: Int)
+}
+```
+
+and then instead of using future, you use:
+```kotlin
+fn avoidingFutureGet(listener: MyListener) {
+  Executors.newSingleThreadExecutor().execute {
+    val something = someTask()
+    listener.onSuccess(something)
+  }
+}
+```
+
+So whoever is calling `avoidingFutureGet` should have created a class that implements `MyListener`. It should have the `onSuccess` callback method to resolve things like promises:
+
+```kotlin
+val myListener = object : MyListener {
+  override fun onSuccess(something: Int) {
+    promise.resolve(something)
+  }
+}
+avoidingFutureGet(myListener)
+```
+
+Another alternative is `AsyncTask`, but I didn't study this enough to talk about it yet hahaha.
 
 ## Querying for single object using its primary key
 Kinda like a hash table access with the key. If you have a `model_table`, with `id` as its primary key, you can define a `Dao` method like this:
