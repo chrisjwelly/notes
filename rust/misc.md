@@ -46,3 +46,6 @@ match input.trim() { // add .trim() here
 ```
 
 I'm actually not fully sure why yet, but I will update this if I remember to and once I figured it out
+
+## Reading and Writing into a file
+Refer to this [Stack Overflow post](https://stackoverflow.com/a/31193386/11284745).

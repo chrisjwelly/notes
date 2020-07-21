@@ -3497,10 +3497,10 @@ where
 ```
 There is extra param here, which displays it before doing comparisons, which is why `Display` trait bound is necessary. Lifetimes are a type of generic, the declarations of the lifetime parameter `'a` and the generic type parameter `T` go in the same list inside angle brackets.
 
-# 10. Writing Automated Tests
+# 11. Writing Automated Tests
 If for example we have `add_two` function to add 2 to whatever number is passed to it. Rust's type checking and borrow checking will ensure that we aren't passing a `String` value or an invalid reference to this function. But Rust *cannot* check that this funciton will do precisely what we intend. Maybe it's adding 10? This is why we should test!
 
-## 10.1 How to Write Tests
+## 11.1 How to Write Tests
 The bodies of test functions typically perform these three actions:
 1. Set up any needed data or state
 2. Run the code you want to test
@@ -3643,7 +3643,7 @@ Writing tests so they return a `Result<T, E>` enables you to use the question ma
 
 However, you can't use the `#[should_panic]` annotation on tests that use `Result<T, E>`. Instead you should return `Err` value directly when the test fails.
 
-## 10.2 Controlling How Tests Are Run
+## 11.2 Controlling How Tests Are Run
 `cargo test` will compile your code in test mode and runs the resulting test binary. You can specify command line options to change behaviour. E.g. default of the binary produced is to run all tests in parallel and capture output generated during the run, preventing the output from being displayed and making it easier to read output related to the test results.
 
 Some command line options go to `cargo test` and some go to the resulting test binary. To separate these types of arguments, you list arguments going to `cargo test` followed by separator `--` and the ones that go to the test binary.
@@ -3677,7 +3677,7 @@ Say now we have two tests `add_two` and `three_add`. To run these things we can 
 ### Ignoring Some Tests Unless Specifically Requested
 You can annotate `ignore` to exclude tests from the `cargo test`.
 
-## 10.3. Test Organization
+## 11.3. Test Organization
 Rust community thinks about tests in terms of two main categories: *unit tests* and *integration tests*.
 
 Unit tests are small and more focused, testing one module in isolation at a time and can test private interfaces.
@@ -3766,3 +3766,13 @@ If our project is a binary crate that only contains *src/main.rs* file and no *s
 Rust projects that provide a binary have a straightforward *src/main.rs* file that calls logic that lives in the *src/lib.rs* file. Using that structure, integration tests *can* test the library crate with `use` to make the important functionality available. If the important functionality works, the small amount of code in the *src/main.rs* file will work as well, and that small amount of code doesn't need to be tested.
 
 I DONT UNDERSTAND THIS LITTLE SECTION
+
+# 12. I/O Project
+Since this is a project, it is skipped in these notes
+
+# 13. Functional Language Features
+## 13.1 Closures: Anonymous Functions that Can Capture Their Environment
+Rust's closures are anonymous functions you can save in a variable or pass as arguments to other functions. You can then evaluate it in a different context. Unlike functions, closures can capture values from the scope in which they're defined.
+
+### Creating an Abstraction of Behaviour with Closures
+
