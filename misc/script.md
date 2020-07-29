@@ -12,7 +12,7 @@ chmod +x <fileName>
 
 3. Run the script using:
 ```
-./ <fileName>
+./<fileName>
 ```
 
 # Unzipping many zip files into directories
