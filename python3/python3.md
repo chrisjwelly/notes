@@ -133,12 +133,25 @@ intervals.sort(key=(lambda interval: interval[0]))
 ## String
 
 ### Sorting a string
-
 ```py
 s = "bca"
 
 # note: sorted(s) returns a list
 sorted_s = ''.join(sorted(s))
+```
+
+### Removing Trailing and Leading Newline and spaces
+```py
+str1 = "\n Starbucks has the best coffee \n \n   "
+newstr = str1.strip()
+print(newstr) # "Starbucks has the best coffee"
+```
+
+### Removing Trailing (only) Newline and spaces
+```py
+str1 = "   \n Starbucks has the best coffee \n  "
+newstr = str1.rstrip()
+print(newstr) # "Starbucks has the best coffee"
 ```
 
 ## Math
@@ -151,3 +164,68 @@ mid = (lo + hi) // 2 # floor division
 
 - If you want to use a fixed dictionary as a key to dictionary, make that fixed dictionary a tuple first
 - To research: Python integers have arbitrary precisions? It won't overflow because you added beyond 32 bits
+- Seems like casting ignores trailing and leading whitespaces. e.g. `int(" \n 1234 \n   ")` works just fine
+
+## I/O
+### With `fileinput`
+
+```py
+import fileinput
+
+if __name__ == "__main__":
+    lines = []
+    for line in fileinput.input():
+        # strip() to remove trailing newline
+        lines.append((line.strip()))
+```
+
+To run the code:
+
+```py
+python3 code.py < input.txt
+```
+
+### With Files
+
+```py
+if __name__ == "__main__":
+    with open("inputs.txt") as file:
+        data = [int(line) for line in file]
+```
+
+## OOP tingz
+Methods to take note:
+
+* `help`
+* Dunder `__init__`, `__str__`, `__repr__`
+
+### Property Decorator Examples
+
+```py
+class Employee:
+    def __init(self, ...):
+        # ...
+        pass
+
+    @property
+    def email(self):
+        return f"{self.first}.{self.last}@email.com"
+    
+    @property
+    def fullname(self):
+        return f"{self.first} {self.last}"
+
+    # this is interesting! 
+    @fullname.setter
+    def fullname(self, name):
+        first, last = name.split(" ")
+        self.first = first
+        self.last = last
+
+    @fullname.deleter
+    def fullname(self):
+        # usage: del employee.fullname
+        print("delete name!")
+        self.first = None
+        self.last = None
+```
